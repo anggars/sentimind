@@ -1,0 +1,130 @@
+"use client";
+import { useState } from "react";
+import Navbar from "@/components/Navbar";
+import { useLanguage } from "@/app/providers"; // <-- Import Bahasa
+import { Search, Tag, Smile, BrainCircuit } from "lucide-react";
+
+export default function AnalysisPage() {
+  const { lang } = useLanguage(); // <-- Ambil Bahasa
+  const [inputText, setInputText] = useState("");
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  // KAMUS BAHASA
+  const t = {
+    en: {
+      title: "AI Text Analyzer",
+      desc: "Paste your tweet, story, or diary. Let AI do the mining.",
+      placeholder: "Type your story here...",
+      btnAnalyze: "Analyze Now",
+      btnLoading: "Processing...",
+      resMBTI: "MBTI Type",
+      resSentiment: "Sentiment",
+      resKeywords: "Top Keywords",
+      error: "Failed to connect to AI Server."
+    },
+    id: {
+      title: "Analisis Teks AI",
+      desc: "Tempel tweet, cerita, atau buku harianmu. Biarkan AI menggali datanya.",
+      placeholder: "Ketik ceritamu di sini...",
+      btnAnalyze: "Analisis Sekarang",
+      btnLoading: "Memproses...",
+      resMBTI: "Tipe MBTI",
+      resSentiment: "Sentimen",
+      resKeywords: "Kata Kunci Utama",
+      error: "Gagal terhubung ke Server AI."
+    }
+  };
+
+  const content = t[lang]; // Pilih konten
+
+  const handleAnalyze = async () => {
+    if (!inputText) return;
+    setLoading(true);
+    setResult(null);
+    try {
+      const response = await fetch("/api/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: inputText }),
+      });
+      const data = await response.json();
+      if (data.success) setResult(data);
+    } catch (error) {
+      alert(content.error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <main className="min-h-screen flex flex-col pt-32 font-sans p-4 relative overflow-hidden">
+      <Navbar />
+      
+      <div className="max-w-4xl mx-auto w-full text-center space-y-8 animate-in fade-in zoom-in duration-500 z-10">
+        <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">
+          {content.title}
+        </h1>
+        <p className="opacity-60 text-lg">{content.desc}</p>
+
+        {/* INPUT AREA */}
+        <div className="liquid-glass p-1.5 shadow-2xl">
+          <div className="bg-white/50 dark:bg-black/20 rounded-xl p-6 backdrop-blur-sm">
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder={content.placeholder}
+              className="w-full bg-transparent outline-none text-lg min-h-[200px] resize-none placeholder:text-gray-400"
+            />
+            <div className="flex justify-end mt-4 pt-4 border-t border-gray-500/10">
+              <button
+                onClick={handleAnalyze}
+                disabled={loading || !inputText}
+                className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-xl font-bold transition-all disabled:opacity-50 shadow-lg hover:shadow-orange-500/30 hover:-translate-y-1"
+              >
+                {loading ? content.btnLoading : content.btnAnalyze} 
+                {!loading && <Search className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* RESULT GRID */}
+        {result && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full animate-in slide-in-from-bottom-10">
+            {/* MBTI */}
+            <div className="liquid-glass p-6 border-t-4 border-orange-500 bg-white/40 dark:bg-black/40">
+              <h3 className="text-xs font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center">
+                <BrainCircuit size={14}/> {content.resMBTI}
+              </h3>
+              <div className="text-5xl font-black text-orange-600 mt-4">{result.mbti_type}</div>
+            </div>
+            {/* SENTIMENT */}
+            <div className="liquid-glass p-6 border-t-4 border-green-500 bg-white/40 dark:bg-black/40">
+              <h3 className="text-xs font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center">
+                <Smile size={14}/> {content.resSentiment}
+              </h3>
+              <div className="text-3xl font-bold mt-4">{result.sentiment}</div>
+            </div>
+            {/* KEYWORDS */}
+            <div className="liquid-glass p-6 border-t-4 border-blue-500 bg-white/40 dark:bg-black/40">
+              <h3 className="text-xs font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center">
+                <Tag size={14}/> {content.resKeywords}
+              </h3>
+              <div className="flex flex-wrap gap-2 justify-center mt-4">
+                {result.keywords.map((k: string, i: number) => (
+                  <span key={i} className="bg-orange-100 dark:bg-orange-900/40 px-3 py-1 rounded-full text-sm font-medium text-orange-800 dark:text-orange-200">
+                    {k}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Background Blob */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-orange-500/10 blur-[100px] -z-10 rounded-full pointer-events-none" />
+    </main>
+  );
+}
