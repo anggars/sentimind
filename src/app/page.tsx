@@ -1,195 +1,104 @@
 "use client";
-
-import { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
-import { Sun, Moon, BrainCircuit, Search, Sparkles } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import Link from "next/link";
+import { Sparkles, BrainCircuit, MessageSquare, Search } from "lucide-react";
+import { useLanguage } from "@/app/providers"; // <-- Import Hook Bahasa
 
 export default function Home() {
-  const { theme, setTheme } = useTheme();
-  const [lang, setLang] = useState<"en" | "id">("en");
-  const [inputText, setInputText] = useState("");
-  const [result, setResult] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  
-  const [isScrolled, setIsScrolled] = useState(false);
+  const { lang } = useLanguage(); // <-- Ambil status bahasa aktif (en/id)
 
-  useEffect(() => {
-    const handleScroll = () => {
-      // Trigger di 10px biar instan
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
+  // KAMUS BAHASA (Teks Inggris vs Indo)
   const t = {
     en: {
-      title: "Sentimind",
-      subtitle: "AI Personality Profiler",
-      desc: "Decode your true self. Analyze your words to reveal your MBTI personality type using advanced Support Vector Machine.",
-      placeholder: "Type your story, tweet, or thoughts here...",
-      analyzeBtn: "Analyze Personality",
-      analyzing: "Reading Minds...",
-      resultTitle: "Your Personality Type:",
-      footer: "© 2025 Sentimind. Crafted with Intelligence.",
+      badge: "The Future of Personality Analysis",
+      titleLine1: "Know Your",
+      titleLine2: "True Self.",
+      desc: "Sentimind uses advanced Machine Learning & Data Mining to decode your MBTI personality, sentiment, and hidden patterns from simple text.",
+      btnStart: "Start Analysis",
+      btnChat: "Talk to AI",
+      features: [
+        { title: "MBTI Prediction", desc: "Support Vector Machine (SVM) algorithm to predict 16 personality types." },
+        { title: "Sentiment Mining", desc: "Analyze emotional tone (Positive/Negative) using NLP TextBlob." },
+        { title: "Keyword Extraction", desc: "Extract hidden patterns and topics from your daily conversations." }
+      ]
     },
     id: {
-      title: "Sentimind",
-      subtitle: "Profil Kepribadian AI",
-      desc: "Ungkap jati dirimu. Analisis kata-katamu untuk menemukan tipe kepribadian MBTI menggunakan Support Vector Machine.",
-      placeholder: "Ketik cerita, tweet, atau pikiranmu di sini...",
-      analyzeBtn: "Analisis Kepribadian",
-      analyzing: "Membaca Pikiran...",
-      resultTitle: "Tipe Kepribadian Anda:",
-      footer: "© 2025 Sentimind. Dibuat dengan Kecerdasan.",
+      badge: "Masa Depan Analisis Kepribadian",
+      titleLine1: "Kenali",
+      titleLine2: "Jati Dirimu.",
+      desc: "Sentimind menggunakan Machine Learning & Data Mining canggih untuk memecahkan kepribadian MBTI, sentimen, dan pola tersembunyi dari teks.",
+      btnStart: "Mulai Analisis",
+      btnChat: "Ngobrol sama AI",
+      features: [
+        { title: "Prediksi MBTI", desc: "Algoritma Support Vector Machine (SVM) untuk memprediksi 16 tipe kepribadian." },
+        { title: "Analisis Sentimen", desc: "Menganalisis nada emosional (Positif/Negatif) menggunakan NLP TextBlob." },
+        { title: "Ekstraksi Kata Kunci", desc: "Menggali pola dan topik tersembunyi dari percakapan sehari-hari kamu." }
+      ]
     }
   };
 
-  const content = t[lang];
+  const content = t[lang]; // <-- Pilih konten sesuai bahasa
 
-  const handleAnalyze = async () => {
-    if (!inputText) return;
-    setLoading(true);
-    setResult(null);
-
-    try {
-      const response = await fetch("/api/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: inputText }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        setResult(data.mbti_type);
-      } else {
-        alert("Error: " + data.error);
-      }
-    } catch (error) {
-      alert("Failed to connect to AI Server.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Icon Mapping (Tetap sama)
+  const icons = [BrainCircuit, Sparkles, Search];
 
   return (
-    <main className="min-h-screen flex flex-col pt-32 relative overflow-hidden font-sans">
+    <main className="min-h-screen flex flex-col font-sans">
+      <Navbar />
       
-      {/* --- NAVBAR PREMIUM SMOOTH --- */}
-      <nav 
-        className={`
-          fixed left-1/2 -translate-x-1/2 z-50 
-          flex justify-between items-center px-6 py-4
-          navbar-transition /* Class Sakti Kita */
-          ${isScrolled 
-            ? "top-6 w-[90%] max-w-5xl rounded-2xl liquid-glass shadow-2xl border border-orange-500/20" 
-            : "top-0 w-full rounded-none bg-transparent border-b border-transparent backdrop-blur-none" 
-          }
-        `}
-      >
-        <div className="flex items-center gap-2">
-          {/* Logo Scale Animation */}
-          <div className={`
-            p-2 rounded-lg text-white navbar-transition
-            ${isScrolled 
-              ? "bg-gradient-to-tr from-orange-500 to-amber-500 shadow-lg scale-100" 
-              : "bg-transparent text-orange-600 dark:text-orange-400 scale-90" 
-            }
-          `}>
-            <BrainCircuit className="w-6 h-6" />
-          </div>
-          <h1 className="text-xl font-black tracking-tight text-orange-600 dark:text-orange-400">
-            SENTIMIND
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setLang(lang === "en" ? "id" : "en")}
-            className="p-2 rounded-full hover:bg-orange-500/10 transition-colors text-sm font-bold opacity-80 hover:opacity-100 cursor-pointer"
-          >
-            {lang.toUpperCase()}
-          </button>
-          <button 
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="p-2 rounded-full hover:bg-orange-500/10 transition-colors opacity-80 hover:opacity-100 cursor-pointer"
-          >
-            {theme === "dark" ? <Sun className="w-5 h-5 text-orange-400" /> : <Moon className="w-5 h-5 text-orange-600" />}
-          </button>
-        </div>
-      </nav>
-
       {/* HERO SECTION */}
-      <div className="flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto w-full text-center gap-8 z-10 p-4">
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-4 pt-32 gap-6 relative overflow-hidden">
         
-        <div className="space-y-4 animate-in fade-in zoom-in duration-700">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-100/50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-200 text-sm font-medium mb-4 border border-orange-200/50 dark:border-orange-800/50 backdrop-blur-sm">
-            <Sparkles className="w-4 h-4" />
-            <span>Powered by SVM Algorithm</span>
-          </div>
-          
-          <h2 className="text-5xl md:text-7xl font-black tracking-tight drop-shadow-sm">
-            {content.title}
-          </h2>
-          <p className="text-2xl md:text-3xl font-light text-orange-600 dark:text-orange-300/90">
-            {content.subtitle}
-          </p>
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-100/50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-200 text-sm font-medium border border-orange-200/50 dark:border-orange-800/50 animate-in fade-in zoom-in duration-700">
+          <Sparkles className="w-4 h-4" />
+          <span>{content.badge}</span>
         </div>
 
-        <p className="opacity-80 max-w-xl text-lg leading-relaxed font-medium">
-          {content.desc}
+        {/* Title */}
+        <h1 className="text-6xl md:text-8xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500 animate-in slide-in-from-bottom-5 duration-700">
+          {content.titleLine1}<br />{content.titleLine2}
+        </h1>
+
+        <p className="text-xl opacity-70 max-w-2xl animate-in slide-in-from-bottom-10 duration-700 delay-100">
+          {/* Render HTML buat bagian Bold */}
+          {lang === 'en' ? (
+             <>Sentimind uses advanced <strong>Machine Learning & Data Mining</strong> to decode your MBTI personality, sentiment, and hidden patterns from simple text.</>
+          ) : (
+             <>Sentimind menggunakan <strong>Machine Learning & Data Mining</strong> canggih untuk memecahkan kepribadian MBTI, sentimen, dan pola tersembunyi dari teks.</>
+          )}
         </p>
 
-        {/* INPUT CARD */}
-        <div className="w-full liquid-glass p-1.5 mt-8 group focus-within:ring-2 ring-orange-400 transition-all duration-300 shadow-2xl shadow-orange-500/10">
-          <div className="bg-white/40 dark:bg-black/20 rounded-xl p-6 backdrop-blur-sm">
-            <textarea
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder={content.placeholder}
-              className="w-full bg-transparent outline-none text-lg min-h-[180px] resize-none placeholder:text-gray-400/70 text-current"
-            />
-            <div className="flex justify-between items-center mt-4 border-t border-gray-200/20 dark:border-white/10 pt-4">
-              <span className="text-xs opacity-50 font-mono">
-                {inputText.length} chars
-              </span>
-              <button
-                onClick={handleAnalyze}
-                disabled={loading || !inputText}
-                className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-orange-500/20 transform hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none cursor-pointer"
-              >
-                {loading ? (
-                  <span className="animate-pulse">{content.analyzing}</span>
-                ) : (
-                  <>
-                    <Search className="w-5 h-5" />
-                    {content.analyzeBtn}
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-4 mt-8 animate-in slide-in-from-bottom-10 duration-700 delay-200">
+          <Link href="/analysis" className="px-8 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-orange-500/30 transition-all flex items-center gap-2">
+            <Search className="w-5 h-5" /> {content.btnStart}
+          </Link>
+          <Link href="/chat" className="px-8 py-4 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/20 hover:bg-gray-50 dark:hover:bg-white/20 rounded-xl font-bold text-lg transition-all flex items-center gap-2">
+            <MessageSquare className="w-5 h-5" /> {content.btnChat}
+          </Link>
         </div>
 
-        {/* RESULT SECTION */}
-        {result && (
-          <div className="mt-12 liquid-glass p-10 w-full animate-in slide-in-from-bottom-10 fade-in duration-500 border-t-4 border-t-orange-500 bg-gradient-to-b from-white/40 to-white/10 dark:from-black/40">
-            <h3 className="text-sm font-bold uppercase tracking-[0.2em] opacity-60 mb-4">
-              {content.resultTitle}
-            </h3>
-            <div className="text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 drop-shadow-sm">
-              {result}
-            </div>
-          </div>
-        )}
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 max-w-5xl w-full px-4 text-left">
+          {content.features.map((item, i) => {
+            const Icon = icons[i];
+            return (
+              <div key={i} className="liquid-glass p-6 hover:border-orange-500/50 transition-colors group">
+                <div className="p-3 bg-orange-100 dark:bg-orange-900/30 w-fit rounded-lg mb-4 text-orange-600 group-hover:scale-110 transition-transform">
+                  <Icon className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                <p className="opacity-60 text-sm">{item.desc}</p>
+              </div>
+            );
+          })}
+        </div>
 
       </div>
-
-      <footer className="mt-20 text-center text-sm opacity-50 py-6">
-        {content.footer}
-      </footer>
-
-      {/* BACKGROUND BLOB */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-orange-500/10 dark:bg-orange-500/5 blur-[120px] rounded-full -z-10 pointer-events-none" />
+      
+      {/* Background Blob */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-orange-500/10 blur-[100px] -z-10 rounded-full" />
     </main>
   );
 }

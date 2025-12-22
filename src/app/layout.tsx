@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Providers } from "./providers";
+import { Providers } from "./providers"; // <--- WAJIB ADA INI!
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,9 +17,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      {/* HAPUS class 'bg-background' atau 'text-foreground' di sini biar gak nabrak */}
       <body className={inter.className}>
-        <Providers>{children}</Providers>
+        {/* --- DARI SINI --- */}
+        <Providers>
+          {children}
+        </Providers>
+        {/* --- SAMPE SINI WAJIB ADA --- */}
       </body>
     </html>
   );
