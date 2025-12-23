@@ -40,24 +40,24 @@ export default function Home() {
   const icons = [BrainCircuit, Sparkles, Search];
 
   return (
-    // PENTING: Cuma div biasa. Navbar udah diurus sama Layout.
     <div className="flex flex-col items-center justify-center font-sans gap-8 w-full">
       
       {/* HERO SECTION */}
-      <div className="flex flex-col items-center justify-center text-center py-10 gap-6 relative w-full">
+      {/* FIX: gap-6 diganti jadi gap-2 biar rapet */}
+      <div className="flex flex-col items-center justify-center text-center py-10 gap-2 relative w-full">
         
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-100/50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-200 text-sm font-medium border border-orange-200/50 dark:border-orange-800/50 animate-in fade-in zoom-in duration-700">
+        <div className="mb-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-100/50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-200 text-sm font-medium border border-orange-200/50 dark:border-orange-800/50 animate-in fade-in zoom-in duration-700">
           <Sparkles className="w-4 h-4" />
           <span>{content.badge}</span>
         </div>
 
         {/* Title */}
-        <h1 className="text-5xl md:text-8xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500 animate-in slide-in-from-bottom-5 duration-700 leading-tight">
+        <h1 className="text-5xl md:text-8xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500 animate-in slide-in-from-bottom-5 duration-700 leading-tight pb-2">
           {content.titleLine1}<br />{content.titleLine2}
         </h1>
 
-        <p className="text-lg md:text-xl opacity-70 max-w-2xl animate-in slide-in-from-bottom-10 duration-700 delay-100 px-2">
+        <p className="text-lg md:text-xl opacity-70 max-w-2xl animate-in slide-in-from-bottom-10 duration-700 delay-100 px-2 mt-2">
           {lang === 'en' ? (
              <>Sentimind uses advanced <strong>Machine Learning & Data Mining</strong> to decode your MBTI personality, sentiment, and hidden patterns from simple text.</>
           ) : (
