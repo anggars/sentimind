@@ -56,17 +56,19 @@ export default function AnalysisPage() {
   };
 
   return (
-    // FIX: Main jadi Div, Height pas layar, Padding dihapus
+    // FIX: space-y-6 diganti space-y-2 biar gak kejauhan sama Title
     <div className="min-h-[calc(100vh-10rem)] flex flex-col justify-center font-sans relative overflow-hidden">
       
-      <div className="max-w-4xl mx-auto w-full text-center space-y-6 animate-in fade-in zoom-in duration-500 z-10 px-4">
-        <h1 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">
+      <div className="max-w-4xl mx-auto w-full text-center space-y-2 animate-in fade-in zoom-in duration-500 z-10 px-4">
+        {/* Title tetep pake pb-2 biar 'y' gak kepotong, tapi space-y container udah dikurangin */}
+        <h1 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500 pb-2">
           {content.title}
         </h1>
         <p className="opacity-60 text-sm md:text-lg">{content.desc}</p>
 
         {/* INPUT AREA */}
-        <div className="liquid-glass p-1.5 shadow-2xl">
+        <div className="liquid-glass p-1.5 shadow-2xl mt-6"> 
+        {/* ^^^ Ditambah mt-6 biar inputnya tetep ada jarak dari teks deskripsi */}
           <div className="bg-white/50 dark:bg-black/20 rounded-xl p-4 md:p-6 backdrop-blur-sm">
             <textarea
               value={inputText}
@@ -120,8 +122,6 @@ export default function AnalysisPage() {
           </div>
         )}
       </div>
-
-      {/* BLOB DIHAPUS DARI SINI BIAR POLOS */}
     </div>
   );
 }
