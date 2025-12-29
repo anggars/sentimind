@@ -36,12 +36,11 @@ export default function Navbar() {
       ? "text-orange-600 dark:text-orange-400 font-bold" 
       : "text-gray-500 hover:text-orange-500 transition-colors";
 
-  // Link Menu biar gak nulis ulang
   const navLinks = [
-    { href: "/", label: "HOME" },
-    { href: "/analysis", label: "ANALYZER" },
-    { href: "/quiz", label: "QUIZ" },
-    { href: "/chat", label: "CHAT" },
+    { href: "/", label: lang === 'en' ? "HOME" : "BERANDA" },
+    { href: "/analysis", label: lang === 'en' ? "ANALYZER" : "ANALISIS" },
+    { href: "/quiz", label: lang === 'en' ? "MINI TEST" : "TES MINI" },
+    { href: "/types", label: lang === 'en' ? "MBTI TYPES" : "TIPE MBTI" },
   ];
 
   return (
@@ -58,19 +57,13 @@ export default function Navbar() {
         `}
       >
         {/* LOGO */}
-        <Link href="/" className="flex items-center gap-2 group z-50" onClick={() => setIsMobileMenuOpen(false)}>
-          <div className={`
-              p-2 rounded-lg text-white navbar-transition
-              ${isScrolled 
-                ? "bg-gradient-to-tr from-orange-500 to-amber-500 shadow-lg scale-100" 
-                : "bg-transparent text-orange-600 dark:text-orange-400 scale-90" 
-              }
-          `}>
-            <BrainCircuit className="w-6 h-6" />
+        <Link href="/" className="flex items-center space-x-2 rtl:space-x-reverse group">
+          <div className="p-2 bg-orange-600 rounded-lg group-hover:rotate-12 transition-transform">
+             <BrainCircuit className="text-white w-6 h-6" />
           </div>
-          <h1 className="text-xl font-black tracking-tight text-orange-600 dark:text-orange-400">
-            SENTIMIND
-          </h1>
+          <span className="self-center text-2xl font-black whitespace-nowrap text-gray-900 dark:text-white tracking-tight">
+            Sentimind<span className="text-orange-600">.</span>
+          </span>
         </Link>
 
         {/* --- DESKTOP MENU (Hidden di HP) --- */}

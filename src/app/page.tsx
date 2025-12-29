@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles, BrainCircuit, MessageSquare, Search } from "lucide-react";
+import { Sparkles, BrainCircuit, Search, BookOpen } from "lucide-react"; 
 import { useLanguage } from "@/app/providers";
 
 export default function Home() {
@@ -9,29 +9,31 @@ export default function Home() {
 
   const t = {
     en: {
-      badge: "The Future of Personality Analysis",
-      titleLine1: "Know Your",
-      titleLine2: "True Self.",
-      desc: "Sentimind uses advanced Machine Learning & Data Mining to decode your MBTI personality, sentiment, and hidden patterns from simple text.",
+      badge: "AI Personality Profiler", // Lebih umum
+      titleLine1: "Understand",         // "Know Your" -> Understand (Lebih netral)
+      titleLine2: "Your Personality.",  // "True Self" -> Your Personality (Gak lebay)
+      // Hapus "Machine Learning & Data Mining", ganti jadi lebih mengalir
+      desc: "Sentimind analyzes your writing style to reveal your MBTI type, emotional tone, and communication patterns from simple text.",
       btnStart: "Start Analysis",
-      btnChat: "Talk to AI",
+      btnLibrary: "Explore Types",
       features: [
-        { title: "MBTI Prediction", desc: "Support Vector Machine (SVM) algorithm to predict 16 personality types." },
-        { title: "Sentiment Mining", desc: "Analyze emotional tone (Positive/Negative) using NLP TextBlob." },
-        { title: "Keyword Extraction", desc: "Extract hidden patterns and topics from your daily conversations." }
+        { title: "MBTI Prediction", desc: "Predicts one of 16 personality types based on your writing style." }, // Hapus SVM
+        { title: "Sentiment Analysis", desc: "Detects the dominant emotional tone and mood in your text." }, // Hapus NLP TextBlob
+        { title: "Keyword Extraction", desc: "Highlights key topics and patterns from your daily conversations." }
       ]
     },
     id: {
-      badge: "Masa Depan Analisis Kepribadian",
-      titleLine1: "Kenali",
-      titleLine2: "Jati Dirimu.",
-      desc: "Sentimind menggunakan Machine Learning & Data Mining canggih untuk memecahkan kepribadian MBTI, sentimen, dan pola tersembunyi dari teks.",
+      badge: "Profil Kepribadian AI",
+      titleLine1: "Pahami",           // "Kenali" -> Pahami
+      titleLine2: "Kepribadianmu.",   // "Jati Dirimu" -> Kepribadianmu (Normal)
+      // Bahasa lebih manusiawi, gak kaku teknis
+      desc: "Sentimind menganalisis gaya tulisanmu untuk mengungkap tipe MBTI, nada emosional, dan pola komunikasi dari teks sederhana.",
       btnStart: "Mulai Analisis",
-      btnChat: "Ngobrol sama AI",
+      btnLibrary: "Kamus MBTI",
       features: [
-        { title: "Prediksi MBTI", desc: "Algoritma Support Vector Machine (SVM) untuk memprediksi 16 tipe kepribadian." },
-        { title: "Analisis Sentimen", desc: "Menganalisis nada emosional (Positif/Negatif) menggunakan NLP TextBlob." },
-        { title: "Ekstraksi Kata Kunci", desc: "Menggali pola dan topik tersembunyi dari percakapan sehari-hari kamu." }
+        { title: "Prediksi MBTI", desc: "Memprediksi satu dari 16 tipe kepribadian berdasarkan gaya penulisanmu." },
+        { title: "Analisis Sentimen", desc: "Mendeteksi nada emosional dan suasana hati dominan dalam teksmu." },
+        { title: "Ekstraksi Kata Kunci", desc: "Menyoroti topik utama dan pola dari percakapan sehari-harimu." }
       ]
     }
   };
@@ -40,11 +42,10 @@ export default function Home() {
   const icons = [BrainCircuit, Sparkles, Search];
 
   return (
-    <div className="flex flex-col items-center justify-center font-sans gap-8 w-full">
+    // FIX POSISI: pt-20 md:pt-24 (Lebih atas lagi sesuai request sebelumnya)
+    <div className="flex flex-col items-center justify-start pt-28 md:pt-24 font-sans gap-8 w-full min-h-screen">
       
-      {/* HERO SECTION */}
-      {/* FIX: gap-6 diganti jadi gap-2 biar rapet */}
-      <div className="flex flex-col items-center justify-center text-center py-10 gap-2 relative w-full">
+      <div className="flex flex-col items-center justify-center text-center gap-2 relative w-full px-4">
         
         {/* Badge */}
         <div className="mb-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-100/50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-200 text-sm font-medium border border-orange-200/50 dark:border-orange-800/50 animate-in fade-in zoom-in duration-700">
@@ -57,12 +58,9 @@ export default function Home() {
           {content.titleLine1}<br />{content.titleLine2}
         </h1>
 
-        <p className="text-lg md:text-xl opacity-70 max-w-2xl animate-in slide-in-from-bottom-10 duration-700 delay-100 px-2 mt-2">
-          {lang === 'en' ? (
-             <>Sentimind uses advanced <strong>Machine Learning & Data Mining</strong> to decode your MBTI personality, sentiment, and hidden patterns from simple text.</>
-          ) : (
-             <>Sentimind menggunakan <strong>Machine Learning & Data Mining</strong> canggih untuk memecahkan kepribadian MBTI, sentimen, dan pola tersembunyi dari teks.</>
-          )}
+        {/* Description - Hapus bold ML & DM biar lebih clean */}
+        <p className="text-lg md:text-xl opacity-70 max-w-2xl animate-in slide-in-from-bottom-10 duration-700 delay-100 px-2 mt-2 text-gray-600 dark:text-gray-300">
+          {content.desc}
         </p>
 
         {/* Action Buttons */}
@@ -70,22 +68,23 @@ export default function Home() {
           <Link href="/analysis" className="w-full sm:w-auto px-8 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-orange-500/30 transition-all flex items-center justify-center gap-2">
             <Search className="w-5 h-5" /> {content.btnStart}
           </Link>
-          <Link href="/chat" className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/20 hover:bg-gray-50 dark:hover:bg-white/20 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2">
-            <MessageSquare className="w-5 h-5" /> {content.btnChat}
+          
+          <Link href="/types" className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/20 hover:bg-gray-50 dark:hover:bg-white/20 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 text-gray-900 dark:text-white">
+            <BookOpen className="w-5 h-5" /> {content.btnLibrary}
           </Link>
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 max-w-5xl w-full text-center md:text-left">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 pb-20 max-w-5xl w-full text-center md:text-left">
           {content.features.map((item, i) => {
             const Icon = icons[i];
             return (
-              <div key={i} className="liquid-glass p-6 hover:border-orange-500/50 transition-colors group flex flex-col items-center md:items-start">
+              <div key={i} className="liquid-glass p-6 hover:border-orange-500/50 transition-colors group flex flex-col items-center md:items-start bg-white/50 dark:bg-gray-900/50 rounded-xl">
                 <div className="p-3 bg-orange-100 dark:bg-orange-900/30 w-fit rounded-lg mb-4 text-orange-600 group-hover:scale-110 transition-transform">
                   <Icon className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                <p className="opacity-60 text-sm">{item.desc}</p>
+                <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{item.title}</h3>
+                <p className="opacity-60 text-sm text-gray-600 dark:text-gray-400">{item.desc}</p>
               </div>
             );
           })}

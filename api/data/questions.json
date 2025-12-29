@@ -1,0 +1,58 @@
+[
+  {
+    "id": 1,
+    "text_id": "Saya merasa lebih berenergi setelah bergaul dengan banyak orang.",
+    "text_en": "I feel more energized after socializing with a large group of people.",
+    "dimension": "EI",
+    "direction": 1
+  },
+  {
+    "id": 2,
+    "text_id": "Saya lebih suka fokus pada fakta nyata daripada ide abstrak.",
+    "text_en": "I prefer to focus on real facts rather than abstract ideas.",
+    "dimension": "SN",
+    "direction": 1
+  },
+  {
+    "id": 3,
+    "text_id": "Saya mengambil keputusan berdasarkan logika, bukan perasaan.",
+    "text_en": "I make decisions based on logic rather than feelings.",
+    "dimension": "TF",
+    "direction": 1
+  },
+  {
+    "id": 4,
+    "text_id": "Saya suka membuat rencana detail sebelum melakukan sesuatu.",
+    "text_en": "I like to have a detailed plan before doing anything.",
+    "dimension": "JP",
+    "direction": 1
+  },
+  {
+    "id": 5,
+    "text_id": "Saya sering merasa lelah jika harus bersosialisasi terlalu lama.",
+    "text_en": "I often feel drained if I have to socialize for too long.",
+    "dimension": "EI",
+    "direction": -1
+  },
+  {
+    "id": 6,
+    "text_id": "Saya sering membayangkan masa depan dan kemungkinan-kemungkinannya.",
+    "text_en": "I often imagine the future and its possibilities.",
+    "dimension": "SN",
+    "direction": -1
+  },
+  {
+    "id": 7,
+    "text_id": "Saya mudah tersentuh secara emosional oleh cerita orang lain.",
+    "text_en": "I am easily emotionally moved by other people's stories.",
+    "dimension": "TF",
+    "direction": -1
+  },
+  {
+    "id": 8,
+    "text_id": "Saya lebih suka bertindak spontan daripada mengikuti jadwal kaku.",
+    "text_en": "I prefer to be spontaneous rather than following a rigid schedule.",
+    "dimension": "JP",
+    "direction": -1
+  }
+]

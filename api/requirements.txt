@@ -1,6 +1,8 @@
 fastapi
-uvicorn
+python-dotenv
 pydantic
 scikit-learn
 joblib
-textblob
+numpy
+deep-translator
+uvicorn

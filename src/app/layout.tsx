@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   description: "Decode your MBTI from text using AI",
 };
 
+// ... import lainnya
+
 export default function RootLayout({
   children,
 }: {
@@ -18,14 +20,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      {/* Background Color diatur lewat class bg-background */}
       <body className={`${inter.className} min-h-screen bg-background text-foreground`}>
         <Providers>
-          {/* NAVBAR CUKUP DISINI */}
           <Navbar />
 
-          {/* Wrapper Utama */}
-          <main className="container mx-auto px-4 pt-24 pb-12 md:px-8">
+          <main className="container mx-auto px-4 md:px-8"> 
             {children}
           </main>
           
