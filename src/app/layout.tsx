@@ -3,15 +3,14 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Sentimind - AI Personality Profiler",
-  description: "Decode your MBTI from text using AI",
+  description: "Analyze your personality using AI",
 };
-
-// ... import lainnya
 
 export default function RootLayout({
   children,
@@ -20,13 +19,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} min-h-screen bg-background text-foreground`}>
+      <body className={`${inter.className} min-h-screen bg-background text-foreground flex flex-col`}> 
         <Providers>
           <Navbar />
-
-          <main className="container mx-auto px-4 md:px-8"> 
+          
+          {/* Main content fills available space */}
+          <main className="container mx-auto px-4 md:px-8 flex-grow"> 
             {children}
           </main>
+
+          <Footer /> {/* 2. Pasang Footer disini */}
           
         </Providers>
       </body>

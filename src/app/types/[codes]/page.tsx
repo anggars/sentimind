@@ -10,32 +10,28 @@ export default function DetailPage() {
   const router = useRouter();
   const { lang } = useLanguage();
   
-  // FIX: Gunakan 'codes' (sesuai nama folder [codes])
-  // Kita tambahkan safety check (?) biar gak error kalau loading
   const rawCode = params?.codes; 
   
   const [code, setCode] = useState<string>("");
 
   useEffect(() => {
     if (rawCode) {
-      // Pastikan convert ke string & uppercase dengan aman
       const c = (Array.isArray(rawCode) ? rawCode[0] : rawCode).toUpperCase();
       setCode(c);
+      document.title = `${c} - Detail | Sentimind`;
     }
   }, [rawCode]);
 
-  // Tampilkan loading kosong sebentar daripada error
   if (!code) return <div className="min-h-screen bg-white dark:bg-black" />;
 
   const data = mbtiDatabase[code];
 
-  // Kalau kode ngaco (misal /types/XYZ), tampilkan Not Found yang rapi
   if (!data) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black text-gray-900 dark:text-white p-4 text-center">
         <h2 className="text-3xl font-black mb-4">Type Not Found 😕</h2>
         <p className="text-gray-500 mb-8">
-          Tipe kepribadian <span className="font-mono bg-gray-100 px-2 py-1 rounded">{code}</span> tidak ditemukan di database kami.
+          Tipe kepribadian <span className="font-mono bg-gray-100 px-2 py-1 rounded">{code}</span> gak ketemu nih, bestie.
         </p>
         <button 
           onClick={() => router.push("/types")}
@@ -59,7 +55,7 @@ export default function DetailPage() {
           className="flex items-center gap-2 text-gray-500 hover:text-orange-500 mb-8 transition-colors group"
         >
           <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          {lang === 'en' ? "Back to Types" : "Kembali ke Daftar"}
+          {lang === 'en' ? "Back to Types" : "Balik ke Daftar"}
         </button>
 
         {/* Header */}
@@ -94,10 +90,30 @@ export default function DetailPage() {
                 </blockquote>
             </div>
 
+            {/* Relationships */}
+            <div className="p-6 rounded-2xl bg-pink-50 dark:bg-pink-900/10 border border-pink-100 dark:border-pink-900/30">
+               <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-pink-600 dark:text-pink-400">
+                  {lang === 'en' ? "Relationships" : "Soal Hubungan"}
+               </h3>
+               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {content.relationships}
+               </p>
+            </div>
+
+            {/* Career */}
+            <div className="p-6 rounded-2xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30">
+               <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                 {lang === 'en' ? "Career Paths" : "Karir yang Cocok"}
+               </h3>
+               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {content.career}
+               </p>
+            </div>
+
             {/* Strengths */}
             <div>
                 <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-green-600">
-                    {lang === 'en' ? "Strengths" : "Kekuatan"}
+                    {lang === 'en' ? "Strengths" : "Kelebihan"}
                 </h3>
                 <ul className="space-y-3">
                     {content.strengths.map((s, idx) => (
@@ -112,7 +128,7 @@ export default function DetailPage() {
             {/* Weaknesses */}
             <div>
                 <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-red-500">
-                    {lang === 'en' ? "Weaknesses" : "Kelemahan"}
+                    {lang === 'en' ? "Weaknesses" : "Kekurangan"}
                 </h3>
                 <ul className="space-y-3">
                     {content.weaknesses.map((w, idx) => (

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useLanguage } from "@/app/providers";
-import { Search, Tag, Smile, BrainCircuit } from "lucide-react";
+import { Search, Tag, Smile, BrainCircuit, Lightbulb, BookOpen, MessageSquare } from "lucide-react";
 
 export default function AnalysisPage() {
   const { lang } = useLanguage();
@@ -19,18 +19,31 @@ export default function AnalysisPage() {
       resMBTI: "MBTI Type",
       resSentiment: "Dominant Emotion",
       resKeywords: "Top Keywords",
-      error: "Failed to connect to AI Server."
+      error: "Failed to connect to AI Server.",
+      guideTitle: "How to get accurate results?",
+      guides: [
+        { icon: MessageSquare, title: "Be Expressive", text: "Write naturally about your feelings, opinions, or daily life experiences." },
+        { icon: BookOpen, title: "Length Matters", text: "Try to write at least 2-3 sentences. Short texts like 'Hello' won't reveal much." },
+        { icon: Lightbulb, title: "Honesty is Key", text: "Don't overthink it. The AI analyzes your subconscious writing style." }
+      ]
     },
+    // REVISI: Indo Gaul (Jaksel Lite)
     id: {
-      title: "Teks MBTI",
-      desc: "Tempel tweet, cerita, atau buku harianmu. Biarkan AI menggali datanya.",
-      placeholder: "Ketik ceritamu di sini...",
+      title: "Analisis Teks",
+      desc: "Tempel tweet, cerita, atau curhatan lo di sini. Biar AI yang gali datanya.",
+      placeholder: "Tulis cerita atau unek-unek lo di sini...",
       btnAnalyze: "Analisis Sekarang",
-      btnLoading: "Memproses...",
+      btnLoading: "Lagi Mikir...",
       resMBTI: "Tipe MBTI",
-      resSentiment: "Emosi Dominan",
-      resKeywords: "Kata Kunci Utama",
-      error: "Gagal terhubung ke Server AI."
+      resSentiment: "Mood Dominan",
+      resKeywords: "Kata Kunci",
+      error: "Yah, gagal connect ke server nih.",
+      guideTitle: "Biar Hasilnya Akurat",
+      guides: [
+        { icon: MessageSquare, title: "Yang Ekspresif Dong", text: "Tulis aja secara natural soal perasaan atau opini lo. Gak usah jaim." },
+        { icon: BookOpen, title: "Jangan Pendek-pendek", text: "Minimal 2-3 kalimat lah. Kalau cuma 'Halo' doang, AI-nya bingung bestie." },
+        { icon: Lightbulb, title: "Jujur Itu Kunci", text: "Gak usah overthink. AI bakal baca pola penulisan bawah sadar lo." }
+      ]
     }
   };
 
@@ -56,7 +69,7 @@ export default function AnalysisPage() {
   };
 
   return (
-    <div className="h-screen w-full pt-28 px-4 sm:px-6 lg:px-8 flex flex-col items-center overflow-hidden font-sans">
+    <div className="w-full pt-28 pb-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center font-sans">
       
       <div className="w-full max-w-4xl mx-auto text-center space-y-4 animate-in fade-in zoom-in duration-500 z-10">
         
@@ -113,7 +126,6 @@ export default function AnalysisPage() {
               <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200">
                 <Tag size={12}/> {content.resKeywords}
               </h3>
-              {/* FIX KEYWORDS STYLING */}
               <div className="flex flex-wrap gap-2 justify-center items-center mt-3 w-full">
                 {result.keywords.slice(0, 3).map((k: string, i: number) => (
                   <span key={i} className="bg-orange-100 dark:bg-orange-900/30 px-3 py-1 rounded-full text-xs font-bold text-orange-700 dark:text-orange-200 border border-orange-200 dark:border-orange-800/50">
@@ -125,6 +137,28 @@ export default function AnalysisPage() {
 
            </div>
         )}
+
+        {!result && (
+          <div className="mt-16 w-full max-w-3xl mx-auto animate-in slide-in-from-bottom-10 delay-200">
+            <h3 className="text-lg font-bold text-center mb-6 text-gray-500 uppercase tracking-widest text-xs">
+              {content.guideTitle}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {content.guides.map((item, idx) => (
+                <div key={idx} className="p-4 rounded-xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm hover:bg-auto/50 transition-colors">
+                  <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center mb-3 mx-auto">
+                    <item.icon size={16} />
+                  </div>
+                  <h4 className="font-bold text-sm mb-1 text-gray-800 dark:text-gray-200">{item.title}</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                    {item.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

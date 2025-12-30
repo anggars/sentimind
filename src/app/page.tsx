@@ -9,31 +9,29 @@ export default function Home() {
 
   const t = {
     en: {
-      badge: "AI Personality Profiler", // Lebih umum
-      titleLine1: "Understand",         // "Know Your" -> Understand (Lebih netral)
-      titleLine2: "Your Personality.",  // "True Self" -> Your Personality (Gak lebay)
-      // Hapus "Machine Learning & Data Mining", ganti jadi lebih mengalir
+      badge: "AI Personality Profiler",
+      titleLine1: "Understand",
+      titleLine2: "Your Personality.",
       desc: "Sentimind analyzes your writing style to reveal your MBTI type, emotional tone, and communication patterns from simple text.",
       btnStart: "Start Analysis",
       btnLibrary: "Explore Types",
       features: [
-        { title: "MBTI Prediction", desc: "Predicts one of 16 personality types based on your writing style." }, // Hapus SVM
-        { title: "Sentiment Analysis", desc: "Detects the dominant emotional tone and mood in your text." }, // Hapus NLP TextBlob
+        { title: "MBTI Prediction", desc: "Predicts one of 16 personality types based on your writing style." },
+        { title: "Sentiment Analysis", desc: "Detects the dominant emotional tone and mood in your text." },
         { title: "Keyword Extraction", desc: "Highlights key topics and patterns from your daily conversations." }
       ]
     },
     id: {
       badge: "Profil Kepribadian AI",
-      titleLine1: "Pahami",           // "Kenali" -> Pahami
-      titleLine2: "Kepribadianmu.",   // "Jati Dirimu" -> Kepribadianmu (Normal)
-      // Bahasa lebih manusiawi, gak kaku teknis
-      desc: "Sentimind menganalisis gaya tulisanmu untuk mengungkap tipe MBTI, nada emosional, dan pola komunikasi dari teks sederhana.",
+      titleLine1: "Pahami",
+      titleLine2: "Kepribadian Lo.",
+      desc: "Sentimind bakal analisis gaya nulis lo buat bongkar tipe MBTI, mood, dan pola tersembunyi dari teks simpel. Literally canggih.",
       btnStart: "Mulai Analisis",
       btnLibrary: "Kamus MBTI",
       features: [
-        { title: "Prediksi MBTI", desc: "Memprediksi satu dari 16 tipe kepribadian berdasarkan gaya penulisanmu." },
-        { title: "Analisis Sentimen", desc: "Mendeteksi nada emosional dan suasana hati dominan dalam teksmu." },
-        { title: "Ekstraksi Kata Kunci", desc: "Menyoroti topik utama dan pola dari percakapan sehari-harimu." }
+        { title: "Prediksi MBTI", desc: "Tebak satu dari 16 tipe kepribadian based on gaya tulisan lo." },
+        { title: "Analisis Sentimen", desc: "Cek vibes tulisan lo, apakah lagi positif banget atau malah gloomy." },
+        { title: "Ekstraksi Kata Kunci", desc: "Highlight topik-topik yang sering lo bahas tanpa sadar." }
       ]
     }
   };
@@ -42,7 +40,6 @@ export default function Home() {
   const icons = [BrainCircuit, Sparkles, Search];
 
   return (
-    // FIX POSISI: pt-20 md:pt-24 (Lebih atas lagi sesuai request sebelumnya)
     <div className="flex flex-col items-center justify-start pt-28 md:pt-24 font-sans gap-8 w-full min-h-screen">
       
       <div className="flex flex-col items-center justify-center text-center gap-2 relative w-full px-4">
@@ -58,7 +55,6 @@ export default function Home() {
           {content.titleLine1}<br />{content.titleLine2}
         </h1>
 
-        {/* Description - Hapus bold ML & DM biar lebih clean */}
         <p className="text-lg md:text-xl opacity-70 max-w-2xl animate-in slide-in-from-bottom-10 duration-700 delay-100 px-2 mt-2 text-gray-600 dark:text-gray-300">
           {content.desc}
         </p>
@@ -79,7 +75,7 @@ export default function Home() {
           {content.features.map((item, i) => {
             const Icon = icons[i];
             return (
-              <div key={i} className="liquid-glass p-6 hover:border-orange-500/50 transition-colors group flex flex-col items-center md:items-start bg-white/50 dark:bg-gray-900/50 rounded-xl">
+              <div key={i} className="liquid-glass p-6 hover:border-orange-500/50 transition-colors group flex flex-col items-center md:items-start bg-white/50 dark:bg-white/5 rounded-xl">
                 <div className="p-3 bg-orange-100 dark:bg-orange-900/30 w-fit rounded-lg mb-4 text-orange-600 group-hover:scale-110 transition-transform">
                   <Icon className="w-6 h-6" />
                 </div>

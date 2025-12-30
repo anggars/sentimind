@@ -22,15 +22,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     setLang((prev) => (prev === "en" ? "id" : "en"));
   };
 
-  // FIX: Jangan return children polosan di sini. 
-  // Biarin ThemeProvider yang ngurus hydration di dalem.
   
   return (
     <LanguageContext.Provider value={{ lang, toggleLang }}>
-      {/* Next-themes udah pinter ngurus hydration mismatch, 
-         jadi kita render langsung aja. Kalaupun mau pake check mounted,
-         Provider bahasa tetep harus di luar if.
-      */}
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         {children}
       </ThemeProvider>

@@ -38,7 +38,7 @@ export default function Navbar() {
 
   const navLinks = [
     { href: "/", label: lang === 'en' ? "HOME" : "BERANDA" },
-    { href: "/analysis", label: lang === 'en' ? "ANALYZER" : "ANALISIS" },
+    { href: "/analyzer", label: lang === 'en' ? "ANALYZER" : "ANALISIS" },
     { href: "/quiz", label: lang === 'en' ? "MINI TEST" : "TES MINI" },
     { href: "/types", label: lang === 'en' ? "MBTI TYPES" : "TIPE MBTI" },
   ];
