@@ -28,7 +28,7 @@ export default function RootLayout({
             {children}
           </main>
 
-          <Footer /> {/* 2. Pasang Footer disini */}
+          <Footer />
           
         </Providers>
       </body>

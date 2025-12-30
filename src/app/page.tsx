@@ -25,7 +25,7 @@ export default function Home() {
       badge: "Profil Kepribadian AI",
       titleLine1: "Pahami",
       titleLine2: "Kepribadian Lo.",
-      desc: "Sentimind bakal analisis gaya nulis lo buat bongkar tipe MBTI, mood, dan pola tersembunyi dari teks simpel. Literally canggih.",
+      desc: "Gak perlu tes berjam-jam. Sentimind baca gaya nulis lo buat nebak MBTI, mood, dan pola pikir yang mungkin lo sendiri gak sadar.",
       btnStart: "Mulai Analisis",
       btnLibrary: "Kamus MBTI",
       features: [

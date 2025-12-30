@@ -31,7 +31,7 @@ export default function DetailPage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black text-gray-900 dark:text-white p-4 text-center">
         <h2 className="text-3xl font-black mb-4">Type Not Found 😕</h2>
         <p className="text-gray-500 mb-8">
-          Tipe kepribadian <span className="font-mono bg-gray-100 px-2 py-1 rounded">{code}</span> gak ketemu nih, bestie.
+          Tipe kepribadian <span className="font-mono bg-gray-100 px-2 py-1 rounded">{code}</span> gak ketemu nih.
         </p>
         <button 
           onClick={() => router.push("/types")}

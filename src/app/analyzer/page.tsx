@@ -41,7 +41,7 @@ export default function AnalysisPage() {
       guideTitle: "Biar Hasilnya Akurat",
       guides: [
         { icon: MessageSquare, title: "Yang Ekspresif Dong", text: "Tulis aja secara natural soal perasaan atau opini lo. Gak usah jaim." },
-        { icon: BookOpen, title: "Jangan Pendek-pendek", text: "Minimal 2-3 kalimat lah. Kalau cuma 'Halo' doang, AI-nya bingung bestie." },
+        { icon: BookOpen, title: "Jangan Pendek-pendek", text: "Minimal 2-3 kalimat lah. Kalau cuma 'Halo' doang, AI-nya bakal bingung." },
         { icon: Lightbulb, title: "Jujur Itu Kunci", text: "Gak usah overthink. AI bakal baca pola penulisan bawah sadar lo." }
       ]
     }
@@ -68,6 +68,15 @@ export default function AnalysisPage() {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (inputText.trim()) {
+        handleAnalyze();
+      }
+    }
+  };
+
   return (
     <div className="w-full pt-28 pb-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center font-sans">
       
@@ -87,6 +96,7 @@ export default function AnalysisPage() {
              <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder={content.placeholder}
               className="w-full bg-transparent outline-none text-base md:text-lg min-h-[120px] md:min-h-[140px] resize-none placeholder:text-gray-400 dark:text-white text-gray-900"
             />
