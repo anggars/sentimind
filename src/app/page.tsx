@@ -61,7 +61,7 @@ export default function Home() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8 animate-in slide-in-from-bottom-10 duration-700 delay-200 w-full px-4">
-          <Link href="/analysis" className="w-full sm:w-auto px-8 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-orange-500/30 transition-all flex items-center justify-center gap-2">
+          <Link href="/analyzer" className="w-full sm:w-auto px-8 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-orange-500/30 transition-all flex items-center justify-center gap-2">
             <Search className="w-5 h-5" /> {content.btnStart}
           </Link>
           
