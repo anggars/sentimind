@@ -50,7 +50,7 @@ export default function DetailPage() {
   const content = lang === 'en' ? data.en : data.id;
 
   return (
-    <div className="min-h-screen dark:bg-black pt-28 pb-12 px-4">
+    <div className="min-h-screen pt-28 pb-12 px-4">
       <div className="max-w-4xl mx-auto">
         
         {/* Tombol Back */}

@@ -56,7 +56,7 @@ export default function AnalysisPage() {
   };
 
   return (
-    <div className="h-screen w-full dark:bg-black pt-28 px-4 sm:px-6 lg:px-8 flex flex-col items-center overflow-hidden font-sans">
+    <div className="h-screen w-full pt-28 px-4 sm:px-6 lg:px-8 flex flex-col items-center overflow-hidden font-sans">
       
       <div className="w-full max-w-4xl mx-auto text-center space-y-4 animate-in fade-in zoom-in duration-500 z-10">
         

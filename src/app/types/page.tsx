@@ -19,7 +19,7 @@ export default function TypesPage() {
 
   return (
     // HEADER & PADDING KONSISTEN (pt-20)
-    <div className="min-h-screen dark:bg-black pt-28 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
+    <div className="min-h-screen pt-28 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
           

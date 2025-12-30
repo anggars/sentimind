@@ -84,7 +84,7 @@ export default function QuizPage() {
 
   // State Loading (Styling disesuaikan dikit biar rapi)
   if (loading) return (
-    <div className="min-h-screen bg-gray-50 dark:bg-black pt-20 flex items-center justify-center font-bold text-orange-600 animate-pulse">
+    <div className="min-h-screen pt-20 flex items-center justify-center font-bold text-orange-600 animate-pulse">
       {content.loading}
     </div>
   );
@@ -92,7 +92,7 @@ export default function QuizPage() {
   // State Result (Styling disamain backgroundnya)
   if (result) {
     return (
-      <div className="h-screen w-full dark:bg-black pt-20 flex flex-col justify-center items-center font-sans relative overflow-hidden pb-12">
+      <div className="h-screen w-full pt-20 flex flex-col justify-center items-center font-sans relative overflow-hidden pb-12">
         <div className="liquid-glass p-10 text-center animate-in zoom-in duration-500 bg-white/40 dark:bg-black/20 border border-white/20">
           <h2 className="text-xl font-bold opacity-60 uppercase tracking-widest text-gray-800 dark:text-gray-200">{content.result}</h2>
           <div className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 my-6 drop-shadow-sm">
@@ -116,7 +116,7 @@ export default function QuizPage() {
   const currentQuestionText = lang === 'en' ? questions[step].text_en : questions[step].text_id;
 
   return (
-    <div className="h-screen dark:bg-black pt-28 pb-12 px-4 sm:px-6 lg:px-8 font-sans flex flex-col items-center overflow-hidden">
+    <div className="h-screen pt-28 pb-12 px-4 sm:px-6 lg:px-8 font-sans flex flex-col items-center overflow-hidden">
       {/* ... sisa codingan sama persis ... */}
       <div className="max-w-3xl w-full z-10">
         
