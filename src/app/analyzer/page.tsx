@@ -1,14 +1,14 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLanguage } from "@/app/providers";
-import { Search, Tag, Smile, BrainCircuit, Lightbulb, BookOpen, MessageSquare, FileText, Globe, Eye, AlertCircle } from "lucide-react";
+import { Search, Tag, Smile, BrainCircuit, Lightbulb, BookOpen, MessageSquare, FileText, Youtube, Eye, AlertCircle } from "lucide-react";
 
 export default function AnalysisPage() {
   const { lang } = useLanguage();
-  const [mode, setMode] = useState<"text" | "reddit">("text");
+  const [mode, setMode] = useState<"text" | "youtube">("text"); 
   
   const [inputText, setInputText] = useState("");
-  const [redditUser, setRedditUser] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState(""); 
   
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -19,76 +19,86 @@ export default function AnalysisPage() {
   const t = {
     en: {
       title: "Text Analyzer",
-      desc: "Paste your tweet, story, or diary. Let AI do the mining.",
+      desc: "Paste your text or YouTube link. Let AI decode the personality.",
       placeholder: "Type your story here...",
       btnAnalyze: "Analyze Now",
       btnLoading: "Processing...",
       resMBTI: "MBTI Type",
       resSentiment: "Dominant Emotion",
       resKeywords: "Top Keywords",
-      resContent: "Analyzed Content",
-      errEmptyText: "Please enter some text first!",
-      errEmptyReddit: "Please enter a username or subreddit!",
-      errConnection: "Failed to connect to AI Server.",
+      // GANTI LABEL BIAR JUJUR
+      resContent: "Analyzed Content", 
       
-      // TAMBAHAN: Terjemahan Error Backend
-      errUserNotFound: "User/Subreddit not found or content is private.",
+      errEmptyText: "Please enter some text first!",
+      errEmptyYoutube: "Please paste a YouTube URL!",
+      errInvalidYoutube: "Invalid YouTube URL format.",
+      errConnection: "Failed to connect to AI Server.",
+      errNoTranscript: "This video has no subtitles/transcript to analyze.",
+      
+      modeText: "Text Input",
+      modeYoutube: "YouTube Video",
+      ytPlaceholder: "Paste YouTube Link (e.g., https://youtu.be/...)",
+      ytTip: "Tip: Works best on videos with spoken words (podcasts, vlogs).",
+      btnYoutube: "Analyze Video",
       
       guideTitle: "How to get accurate results?",
       guides: [
         { icon: MessageSquare, title: "Be Expressive", text: "Write naturally about your feelings, opinions, or daily life experiences." },
         { icon: BookOpen, title: "Length Matters", text: "Try to write at least 2-3 sentences. Short texts like 'Hello' won't reveal much." },
         { icon: Lightbulb, title: "Honesty is Key", text: "Don't overthink it. The AI analyzes your subconscious writing style." }
-      ],
-      modeText: "Text Input",
-      modeReddit: "Reddit Profiler",
-      redditPlaceholder: "e.g. r/indonesia or u/spez",
-      redditTip: "Tip: Use 'r/' for subreddits or just username for profiles.",
-      btnReddit: "Analyze Profile"
+      ]
     },
     id: {
       title: "Analisis Teks",
-      desc: "Tempel tweet, cerita, atau curhatan lo di sini. Biar AI yang gali datanya.",
+      desc: "Tempel curhatan atau link YouTube. Biar AI yang bedah kepribadiannya.",
       placeholder: "Tulis cerita atau unek-unek lo di sini...",
       btnAnalyze: "Analisis Sekarang",
-      btnLoading: "Lagi Mikir...",
+      btnLoading: "Lagi Nonton...",
       resMBTI: "Tipe MBTI",
       resSentiment: "Mood Dominan",
       resKeywords: "Kata Kunci",
-      resContent: "Intip Isi Konten",
-      errEmptyText: "Eits, isi dulu dong teksnya!",
-      errEmptyReddit: "Username atau subredditnya mana?",
-      errConnection: "Yah, gagal connect ke server nih.",
+      // GANTI LABEL BIAR JUJUR
+      resContent: "Data Video & Komentar",
       
-      // TAMBAHAN: Terjemahan Error Backend (Gaul)
-      errUserNotFound: "User/Subreddit gak ketemu atau akunnya di-private nih.",
+      errEmptyText: "Eits, isi dulu dong teksnya!",
+      errEmptyYoutube: "Link YouTube-nya mana?",
+      errInvalidYoutube: "Link YouTube-nya gak valid nih.",
+      errConnection: "Yah, gagal connect ke server nih.",
+      errNoTranscript: "Video ini gak ada subtitle-nya, cari yang lain gih.",
+      
+      modeText: "Tulis Manual",
+      modeYoutube: "Link YouTube",
+      ytPlaceholder: "Tempel Link YouTube (misal: https://youtu.be/...)",
+      ytTip: "Tips: Paling mantep buat video podcast, vlog, atau opini.",
+      btnYoutube: "Bedah Video",
       
       guideTitle: "Biar Hasilnya Akurat",
       guides: [
         { icon: MessageSquare, title: "Yang Ekspresif Dong", text: "Tulis aja secara natural soal perasaan atau opini lo. Gak usah jaim." },
         { icon: BookOpen, title: "Jangan Pendek-pendek", text: "Minimal 2-3 kalimat lah. Kalau cuma 'Halo' doang, AI-nya bakal bingung." },
         { icon: Lightbulb, title: "Jujur Itu Kunci", text: "Gak usah overthink. AI bakal baca pola penulisan bawah sadar lo." }
-      ],
-      modeText: "Tulis Manual",
-      modeReddit: "Stalking Reddit",
-      redditPlaceholder: "misal: r/indonesia atau u/spez",
-      redditTip: "Tips: Pake 'r/' buat cek komunitas, atau username buat kepoin orang.",
-      btnReddit: "Kepoin Profil"
+      ]
     }
   };
 
   const content = t[lang];
 
-  // Helper Error message makin pinter
+  // --- HELPER BUAT AMBIL ID YOUTUBE DARI LINK ---
+  const extractVideoId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
   const getErrorMessage = () => {
     if (!errorType) return "";
     if (errorType === "EMPTY_TEXT") return content.errEmptyText;
-    if (errorType === "EMPTY_REDDIT") return content.errEmptyReddit;
+    if (errorType === "EMPTY_YOUTUBE") return content.errEmptyYoutube;
+    if (errorType === "INVALID_YOUTUBE") return content.errInvalidYoutube;
     if (errorType === "CONNECTION") return content.errConnection;
     
-    // Cek kode error dari backend
     if (errorType === "BACKEND_ERROR") {
-        if (backendErrorMsg === "USER_NOT_FOUND") return content.errUserNotFound;
+        if (backendErrorMsg === "NO_TRANSCRIPT") return content.errNoTranscript;
         return backendErrorMsg || content.errConnection;
     }
     return "";
@@ -101,43 +111,62 @@ export default function AnalysisPage() {
     setBackendErrorMsg("");
     setResult(null);
 
-    if (mode === "text" && !inputText.trim()) {
-      setErrorType("EMPTY_TEXT");
-      return;
-    }
-    if (mode === "reddit" && !redditUser.trim()) {
-      setErrorType("EMPTY_REDDIT");
-      return;
+    // --- VALIDASI YOUTUBE ---
+    if (mode === "youtube") {
+        if (!youtubeUrl.trim()) {
+            setErrorType("EMPTY_YOUTUBE");
+            return;
+        }
+        const videoId = extractVideoId(youtubeUrl);
+        if (!videoId) {
+            setErrorType("INVALID_YOUTUBE");
+            return;
+        }
+        
+        // Panggil API dengan Video ID
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/youtube/${videoId}`, { method: "GET" });
+            const data = await res.json();
+            if (data.success) {
+                setResult(data);
+            } else {
+                setBackendErrorMsg(data.error);
+                setErrorType("BACKEND_ERROR");
+            }
+        } catch (err) {
+            setErrorType("CONNECTION");
+        } finally {
+            setLoading(false);
+        }
+        return;
     }
 
-    setLoading(true);
-    
-    try {
-      let res;
-      if (mode === "text") {
-         res = await fetch("/api/predict", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: inputText }),
-        });
-      } else {
-         res = await fetch(`/api/reddit/${encodeURIComponent(redditUser)}`, {
-           method: "GET"
-         });
-      }
-
-      const data = await res.json();
-      
-      if (data.success) {
-        setResult(data);
-      } else {
-        setBackendErrorMsg(data.error); 
-        setErrorType("BACKEND_ERROR");
-      }
-    } catch (err) {
-      setErrorType("CONNECTION");
-    } finally {
-      setLoading(false);
+    // --- VALIDASI TEXT ---
+    if (mode === "text") {
+        if (!inputText.trim()) {
+            setErrorType("EMPTY_TEXT");
+            return;
+        }
+        setLoading(true);
+        try {
+            const res = await fetch("/api/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: inputText }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setResult(data);
+            } else {
+                setBackendErrorMsg(data.error);
+                setErrorType("BACKEND_ERROR");
+            }
+        } catch (err) {
+            setErrorType("CONNECTION");
+        } finally {
+            setLoading(false);
+        }
     }
   };
 
@@ -170,7 +199,7 @@ export default function AnalysisPage() {
             </p>
         </div>
 
-        {/* --- TOMBOL SWITCH MODE (GRID) --- */}
+        {/* --- TOMBOL SWITCH MODE (TEXT vs YOUTUBE) --- */}
         <div className="grid grid-cols-2 gap-3 mt-8 w-full max-w-[340px] mx-auto">
             <button 
               onClick={() => { setMode("text"); setResult(null); setErrorType(null); }}
@@ -182,13 +211,13 @@ export default function AnalysisPage() {
               <FileText size={16}/> {content.modeText}
             </button>
             <button 
-              onClick={() => { setMode("reddit"); setResult(null); setErrorType(null); }}
+              onClick={() => { setMode("youtube"); setResult(null); setErrorType(null); }}
               className={`flex items-center justify-center gap-2 py-2.5 rounded-full font-bold text-sm transition-all border border-transparent
-                ${mode === "reddit" 
-                  ? "bg-[#FF4500] text-white shadow-lg shadow-[#FF4500]/20" 
+                ${mode === "youtube" 
+                  ? "bg-[#FF0000] text-white shadow-lg shadow-[#FF0000]/20" 
                   : "bg-gray-100 dark:bg-white/5 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-white/10"}`}
             >
-              <Globe size={16}/> {content.modeReddit}
+              <Youtube size={16}/> {content.modeYoutube}
             </button>
         </div>
 
@@ -210,25 +239,25 @@ export default function AnalysisPage() {
                   <div className="py-2 px-2 w-full">
                     <div className="relative flex items-center">
                       <div className="absolute left-4 text-gray-400 pointer-events-none">
-                        <Search size={20} />
+                        <Youtube size={20} />
                       </div>
                       <input
                         type="text"
-                        value={redditUser}
-                        onChange={(e) => { setRedditUser(e.target.value); setErrorType(null); }}
+                        value={youtubeUrl}
+                        onChange={(e) => { setYoutubeUrl(e.target.value); setErrorType(null); }}
                         onKeyDown={handleKeyDown}
-                        placeholder={content.redditPlaceholder}
-                        className="w-full bg-white/50 dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl py-4 pl-12 pr-4 text-lg font-medium focus:border-[#FF4500] focus:ring-2 focus:ring-[#FF4500]/20 focus:outline-none transition-all text-gray-800 dark:text-white placeholder:text-gray-400"
+                        placeholder={content.ytPlaceholder}
+                        className="w-full bg-white/50 dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl py-4 pl-12 pr-4 text-lg font-medium focus:border-[#FF0000] focus:ring-2 focus:ring-[#FF0000]/20 focus:outline-none transition-all text-gray-800 dark:text-white placeholder:text-gray-400"
                       />
                     </div>
                     <p className="text-xs text-left mt-3 ml-1 text-gray-500 dark:text-gray-400 flex items-center gap-1 pl-1">
-                      <Lightbulb size={12} className="text-yellow-500"/> {content.redditTip}
+                      <Lightbulb size={12} className="text-yellow-500"/> {content.ytTip}
                     </p>
                   </div>
                )}
              </div>
 
-            {/* --- ERROR WARNING (DYNAMIC LANG) --- */}
+            {/* ERROR MSG */}
             {currentErrorMsg && (
               <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3 text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-2">
                 <AlertCircle size={20} className="shrink-0" />
@@ -241,23 +270,21 @@ export default function AnalysisPage() {
                 onClick={handleAnalyze}
                 disabled={loading}
                 className={`flex items-center gap-2 text-white px-6 py-2 rounded-lg font-bold transition-all disabled:opacity-50 shadow-lg text-sm md:text-base
-                  ${mode === "reddit" 
-                    ? "bg-[#FF4500] hover:bg-orange-700 hover:shadow-[#FF4500]/30" 
+                  ${mode === "youtube" 
+                    ? "bg-[#FF0000] hover:bg-red-700 hover:shadow-[#FF0000]/30" 
                     : "bg-orange-600 hover:bg-orange-700 hover:shadow-orange-500/30"}`}
               >
-                {loading ? content.btnLoading : (mode === "reddit" ? content.btnReddit : content.btnAnalyze)} 
+                {loading ? content.btnLoading : (mode === "youtube" ? content.btnYoutube : content.btnAnalyze)} 
                 {!loading && <Search className="w-4 h-4" />}
               </button>
             </div>
           </div>
         </div>
 
-        {/* HASIL ANALISIS */}
+        {/* HASIL */}
         {result && (
            <div className="w-full max-w-3xl mx-auto animate-in slide-in-from-bottom-10 mt-6 space-y-4">
-             
              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-               
                {/* MBTI */}
                <div className="liquid-glass p-4 border-t-4 border-orange-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl flex flex-col h-full">
                  <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-2">
@@ -267,7 +294,6 @@ export default function AnalysisPage() {
                     <div className="text-3xl font-black text-orange-600">{result.mbti_type}</div>
                  </div>
                </div>
-               
                {/* EMOTION */}
                <div className="liquid-glass p-4 border-t-4 border-green-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl flex flex-col h-full">
                  <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-2">
@@ -279,7 +305,6 @@ export default function AnalysisPage() {
                     </div>
                  </div>
                </div>
-               
                {/* KEYWORDS */}
                <div className="liquid-glass p-4 border-t-4 border-blue-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl h-full flex flex-col">
                  <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-3">
@@ -295,7 +320,7 @@ export default function AnalysisPage() {
                </div>
              </div>
 
-             {/* PREVIEW KONTEN */}
+             {/* PREVIEW CONTENT */}
              {result.fetched_text && (
                 <div className="liquid-glass p-6 bg-white/40 dark:bg-black/20 backdrop-blur-sm rounded-xl text-left border border-gray-200 dark:border-white/5">
                   <h3 className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2 text-gray-500">
@@ -308,8 +333,8 @@ export default function AnalysisPage() {
              )}
            </div>
         )}
-
-        {/* PANDUAN */}
+        
+        {/* GUIDES */}
         {!result && (
           <div className="mt-16 w-full max-w-3xl mx-auto animate-in slide-in-from-bottom-10 delay-200">
             <h3 className="text-lg font-bold text-center mb-6 text-gray-500 uppercase tracking-widest text-xs">

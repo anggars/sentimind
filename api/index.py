@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from .core.nlp_handler import NLPHandler
 import os
 
+# Load environment variables dari file .env
 load_dotenv()
 
 from api.predict import predict_endpoint
@@ -10,25 +11,46 @@ from api.quiz import get_quiz_questions, submit_quiz
 
 app = FastAPI()
 
+# --- TAMBAHAN DEBUGGING (CEK SAAT SERVER NYALA) ---
+@app.on_event("startup")
+async def startup_event():
+    api_key = os.getenv("YOUTUBE_API_KEY")
+    print("\n" + "="*40)
+    if api_key:
+        print(f"✅ API KEY DITEMUKAN: {api_key[:5]}...******")
+        print("🚀 Mode: OFFICIAL API (Anti-Blokir)")
+    else:
+        print("❌ API KEY TIDAK DITEMUKAN!")
+        print("⚠️  Mode: FALLBACK SCRAPING (Rawan Error)")
+    print("="*40 + "\n")
+
 app.add_api_route("/api/predict", predict_endpoint, methods=["POST"])
 app.add_api_route("/api/quiz", get_quiz_questions, methods=["GET"])
 app.add_api_route("/api/quiz", submit_quiz, methods=["POST"])
 
 @app.get("/api/hello")
 def health_check():
-    return {"status": "online", "mode": "local_dev_aggregated"}
+    # Biar bisa dicek lewat browser: http://localhost:8000/api/hello
+    has_key = bool(os.getenv("YOUTUBE_API_KEY"))
+    return {
+        "status": "online", 
+        "mode": "youtube_ready", 
+        "api_key_detected": has_key 
+    }
 
-@app.get("/api/reddit/{username:path}") 
-def analyze_reddit_user(username: str):
-    text = NLPHandler.fetch_reddit_text(username)
+# --- ROUTE YOUTUBE BARU ---
+@app.get("/api/youtube/{video_id}") 
+def analyze_youtube_video(video_id: str):
+    # Panggil fungsi fetch YouTube
+    text = NLPHandler.fetch_youtube_transcript(video_id)
     
     if not text:
         return {
             "success": False, 
-            # GANTI JADI KODE ERROR SINGKAT
-            "error": "USER_NOT_FOUND" 
+            "error": "NO_TRANSCRIPT" # Kode error kalau video gak ada subtitle
         }
     
+    # Analisis teks transkripnya
     result = NLPHandler.predict_all(text)
     
     return {
