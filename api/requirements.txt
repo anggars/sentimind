@@ -6,3 +6,4 @@ joblib
 numpy
 deep-translator
 uvicorn
+requests

@@ -1,20 +1,14 @@
 from fastapi import FastAPI
-from dotenv import load_dotenv # <--- Import ini
+from dotenv import load_dotenv
+from .core.nlp_handler import NLPHandler
 import os
 
-# 1. BACA .ENV DULUAN (Wajib Paling Atas)
-# Ini biar Token kebaca sebelum kode lain jalan
 load_dotenv()
 
-# Import fungsi-fungsi modular
 from api.predict import predict_endpoint
 from api.quiz import get_quiz_questions, submit_quiz
 
 app = FastAPI()
-
-# =================================================================
-#  ROUTING KHUSUS LOCAL DEVELOPMENT
-# =================================================================
 
 app.add_api_route("/api/predict", predict_endpoint, methods=["POST"])
 app.add_api_route("/api/quiz", get_quiz_questions, methods=["GET"])
@@ -23,3 +17,23 @@ app.add_api_route("/api/quiz", submit_quiz, methods=["POST"])
 @app.get("/api/hello")
 def health_check():
     return {"status": "online", "mode": "local_dev_aggregated"}
+
+@app.get("/api/reddit/{username:path}") # Pastikan ada :path
+def analyze_reddit_user(username: str):
+    text = NLPHandler.fetch_reddit_text(username)
+    
+    if not text:
+        return {
+            "success": False, 
+            "error": "User/Subreddit tidak ditemukan atau tidak ada konten publik."
+        }
+    
+    result = NLPHandler.predict_all(text)
+    
+    return {
+        "success": True,
+        "mbti_type": result["mbti"],
+        "emotion": result["emotion"],
+        "keywords": result["keywords"],
+        "fetched_text": text  # <--- TAMBAHAN PENTING: Kirim teks aslinya balik
+    }

@@ -1,11 +1,15 @@
 "use client";
 import { useState } from "react";
 import { useLanguage } from "@/app/providers";
-import { Search, Tag, Smile, BrainCircuit, Lightbulb, BookOpen, MessageSquare } from "lucide-react";
+import { Search, Tag, Smile, BrainCircuit, Lightbulb, BookOpen, MessageSquare, FileText, Globe, Eye } from "lucide-react";
 
 export default function AnalysisPage() {
   const { lang } = useLanguage();
+  const [mode, setMode] = useState<"text" | "reddit">("text");
+  
   const [inputText, setInputText] = useState("");
+  const [redditUser, setRedditUser] = useState("");
+  
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
@@ -19,15 +23,20 @@ export default function AnalysisPage() {
       resMBTI: "MBTI Type",
       resSentiment: "Dominant Emotion",
       resKeywords: "Top Keywords",
+      resContent: "Analyzed Content",
       error: "Failed to connect to AI Server.",
       guideTitle: "How to get accurate results?",
       guides: [
         { icon: MessageSquare, title: "Be Expressive", text: "Write naturally about your feelings, opinions, or daily life experiences." },
         { icon: BookOpen, title: "Length Matters", text: "Try to write at least 2-3 sentences. Short texts like 'Hello' won't reveal much." },
         { icon: Lightbulb, title: "Honesty is Key", text: "Don't overthink it. The AI analyzes your subconscious writing style." }
-      ]
+      ],
+      modeText: "Text Input",
+      modeReddit: "Reddit Profiler",
+      redditPlaceholder: "e.g. r/indonesia or u/spez",
+      redditTip: "Tip: Use 'r/' for subreddits or just username for profiles.",
+      btnReddit: "Analyze Profile"
     },
-    // REVISI: Indo Gaul (Jaksel Lite)
     id: {
       title: "Analisis Teks",
       desc: "Tempel tweet, cerita, atau curhatan lo di sini. Biar AI yang gali datanya.",
@@ -37,30 +46,51 @@ export default function AnalysisPage() {
       resMBTI: "Tipe MBTI",
       resSentiment: "Mood Dominan",
       resKeywords: "Kata Kunci",
+      resContent: "Intip Isi Konten",
       error: "Yah, gagal connect ke server nih.",
       guideTitle: "Biar Hasilnya Akurat",
       guides: [
         { icon: MessageSquare, title: "Yang Ekspresif Dong", text: "Tulis aja secara natural soal perasaan atau opini lo. Gak usah jaim." },
         { icon: BookOpen, title: "Jangan Pendek-pendek", text: "Minimal 2-3 kalimat lah. Kalau cuma 'Halo' doang, AI-nya bakal bingung." },
         { icon: Lightbulb, title: "Jujur Itu Kunci", text: "Gak usah overthink. AI bakal baca pola penulisan bawah sadar lo." }
-      ]
+      ],
+      modeText: "Tulis Manual",
+      modeReddit: "Stalking Reddit",
+      redditPlaceholder: "misal: r/indonesia atau u/spez",
+      redditTip: "Tips: Pake 'r/' buat cek komunitas, atau username buat kepoin orang.",
+      btnReddit: "Kepoin Profil"
     }
   };
 
   const content = t[lang];
 
   const handleAnalyze = async () => {
-    if (!inputText) return;
     setLoading(true);
     setResult(null);
+    
     try {
-      const response = await fetch("/api/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: inputText }),
-      });
-      const data = await response.json();
-      if (data.success) setResult(data);
+      let res;
+      if (mode === "text") {
+         if (!inputText) return;
+         res = await fetch("/api/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: inputText }),
+        });
+      } else {
+         if (!redditUser) return;
+         res = await fetch(`/api/reddit/${encodeURIComponent(redditUser)}`, {
+           method: "GET"
+         });
+      }
+
+      const data = await res.json();
+      
+      if (data.success) {
+        setResult(data);
+      } else {
+        alert(data.error || content.error);
+      }
     } catch (error) {
       alert(content.error);
     } finally {
@@ -68,14 +98,21 @@ export default function AnalysisPage() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (inputText.trim()) {
-        handleAnalyze();
-      }
+      if (mode === "text" && inputText.trim()) handleAnalyze();
+      if (mode === "reddit" && redditUser.trim()) handleAnalyze();
     }
   };
+
+  const getKeywords = () => {
+    if (!result?.keywords) return [];
+    if (Array.isArray(result.keywords)) return result.keywords;
+    return lang === 'id' ? result.keywords.id : result.keywords.en;
+  };
+
+  const currentKeywords = getKeywords();
 
   return (
     <div className="w-full pt-28 pb-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center font-sans">
@@ -91,22 +128,74 @@ export default function AnalysisPage() {
             </p>
         </div>
 
-        <div className="liquid-glass p-1.5 shadow-2xl mt-12 max-w-3xl mx-auto w-full"> 
+        {/* --- TOMBOL SWITCH MODE (PAKE GRID BIAR SAMA RATA) --- */}
+        <div className="grid grid-cols-2 gap-3 mt-8 w-full max-w-[340px] mx-auto">
+            <button 
+              onClick={() => { setMode("text"); setResult(null); }}
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-full font-bold text-sm transition-all border border-transparent
+                ${mode === "text" 
+                  ? "bg-orange-600 text-white shadow-lg shadow-orange-500/20" 
+                  : "bg-gray-100 dark:bg-white/5 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-white/10"}`}
+            >
+              <FileText size={16}/> {content.modeText}
+            </button>
+            <button 
+              onClick={() => { setMode("reddit"); setResult(null); }}
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-full font-bold text-sm transition-all border border-transparent
+                ${mode === "reddit" 
+                  ? "bg-[#FF4500] text-white shadow-lg shadow-[#FF4500]/20" 
+                  : "bg-gray-100 dark:bg-white/5 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-white/10"}`}
+            >
+              <Globe size={16}/> {content.modeReddit}
+            </button>
+        </div>
+
+        <div className="liquid-glass p-1.5 shadow-2xl mt-6 max-w-3xl mx-auto w-full"> 
           <div className="bg-white/50 dark:bg-black/20 rounded-xl p-4 backdrop-blur-sm">
-             <textarea
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={content.placeholder}
-              className="w-full bg-transparent outline-none text-base md:text-lg min-h-[120px] md:min-h-[140px] resize-none placeholder:text-gray-400 dark:text-white text-gray-900"
-            />
+             
+             {/* AREA INPUT (DIBIKIN CONSISTENT HEIGHT) */}
+             <div className="min-h-[140px] flex flex-col justify-center">
+               {mode === "text" ? (
+                  <textarea
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={content.placeholder}
+                    className="w-full bg-transparent outline-none text-base md:text-lg h-full resize-none placeholder:text-gray-400 dark:text-white text-gray-900"
+                    style={{ minHeight: '140px' }} // Paksa tinggi minimal sama
+                  />
+               ) : (
+                  <div className="py-2 px-2 w-full">
+                    <div className="relative flex items-center">
+                      <div className="absolute left-4 text-gray-400 pointer-events-none">
+                        <Search size={20} />
+                      </div>
+                      <input
+                        type="text"
+                        value={redditUser}
+                        onChange={(e) => setRedditUser(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder={content.redditPlaceholder}
+                        className="w-full bg-white/50 dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl py-4 pl-12 pr-4 text-lg font-medium focus:border-[#FF4500] focus:ring-2 focus:ring-[#FF4500]/20 focus:outline-none transition-all text-gray-800 dark:text-white placeholder:text-gray-400"
+                      />
+                    </div>
+                    <p className="text-xs text-left mt-3 ml-1 text-gray-500 dark:text-gray-400 flex items-center gap-1 pl-1">
+                      <Lightbulb size={12} className="text-yellow-500"/> {content.redditTip}
+                    </p>
+                  </div>
+               )}
+             </div>
+
             <div className="flex justify-end mt-2 pt-2 border-t border-gray-500/10">
               <button
                 onClick={handleAnalyze}
-                disabled={loading || !inputText}
-                className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-bold transition-all disabled:opacity-50 shadow-lg hover:shadow-orange-500/30 text-sm md:text-base"
+                disabled={loading || (mode === "text" ? !inputText : !redditUser)}
+                className={`flex items-center gap-2 text-white px-6 py-2 rounded-lg font-bold transition-all disabled:opacity-50 shadow-lg text-sm md:text-base
+                  ${mode === "reddit" 
+                    ? "bg-[#FF4500] hover:bg-orange-700 hover:shadow-[#FF4500]/30" 
+                    : "bg-orange-600 hover:bg-orange-700 hover:shadow-orange-500/30"}`}
               >
-                {loading ? content.btnLoading : content.btnAnalyze} 
+                {loading ? content.btnLoading : (mode === "reddit" ? content.btnReddit : content.btnAnalyze)} 
                 {!loading && <Search className="w-4 h-4" />}
               </button>
             </div>
@@ -114,36 +203,60 @@ export default function AnalysisPage() {
         </div>
 
         {result && (
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl mx-auto animate-in slide-in-from-bottom-10 mt-6">
+           <div className="w-full max-w-3xl mx-auto animate-in slide-in-from-bottom-10 mt-6 space-y-4">
              
-             <div className="liquid-glass p-4 border-t-4 border-orange-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200">
-                <BrainCircuit size={12}/> {content.resMBTI}
-              </h3>
-              <div className="text-3xl font-black text-orange-600 mt-1">{result.mbti_type}</div>
-            </div>
-            
-            <div className="liquid-glass p-4 border-t-4 border-green-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200">
-                <Smile size={12}/> {content.resSentiment}
-              </h3>
-              <div className="text-xl font-bold mt-1 capitalize text-green-600 dark:text-green-400 truncate">
-                {result.emotion ? result.emotion[lang] : result.sentiment}
-              </div>
-            </div>
-            
-            <div className="liquid-glass p-4 border-t-4 border-blue-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200">
-                <Tag size={12}/> {content.resKeywords}
-              </h3>
-              <div className="flex flex-wrap gap-2 justify-center items-center mt-3 w-full">
-                {result.keywords.slice(0, 3).map((k: string, i: number) => (
-                  <span key={i} className="bg-orange-100 dark:bg-orange-900/30 px-3 py-1 rounded-full text-xs font-bold text-orange-700 dark:text-orange-200 border border-orange-200 dark:border-orange-800/50">
-                    {k}
-                  </span>
-                ))}
-              </div>
-            </div>
+             {/* HASIL UTAMA (GRID) */}
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+               
+               {/* MBTI - Flex Col + h-full + Center Content */}
+               <div className="liquid-glass p-4 border-t-4 border-orange-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl flex flex-col h-full">
+                 <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-2">
+                   <BrainCircuit size={12}/> {content.resMBTI}
+                 </h3>
+                 <div className="flex-1 flex items-center justify-center">
+                    <div className="text-3xl font-black text-orange-600">{result.mbti_type}</div>
+                 </div>
+               </div>
+               
+               {/* EMOTION - Flex Col + h-full + Center Content */}
+               <div className="liquid-glass p-4 border-t-4 border-green-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl flex flex-col h-full">
+                 <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-2">
+                   <Smile size={12}/> {content.resSentiment}
+                 </h3>
+                 <div className="flex-1 flex items-center justify-center">
+                    <div className="text-xl font-bold capitalize text-green-600 dark:text-green-400 truncate px-2 text-center">
+                       {result.emotion ? (result.emotion[lang] || result.emotion.id || result.emotion) : result.sentiment}
+                    </div>
+                 </div>
+               </div>
+               
+               {/* KEYWORDS */}
+               <div className="liquid-glass p-4 border-t-4 border-blue-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl h-full flex flex-col">
+                 <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-3">
+                   <Tag size={12}/> {content.resKeywords}
+                 </h3>
+                 <div className="flex flex-wrap gap-2 justify-center items-center w-full">
+                   {currentKeywords.slice(0, 3).map((k: string, i: number) => (
+                     <span key={i} className="bg-orange-100 dark:bg-orange-900/30 px-3 py-1 rounded-full text-xs font-bold text-orange-700 dark:text-orange-200 border border-orange-200 dark:border-orange-800/50 capitalize">
+                       {k}
+                     </span>
+                   ))}
+                 </div>
+               </div>
+
+             </div>
+
+             {/* PREVIEW KONTEN */}
+             {result.fetched_text && (
+                <div className="liquid-glass p-6 bg-white/40 dark:bg-black/20 backdrop-blur-sm rounded-xl text-left border border-gray-200 dark:border-white/5">
+                  <h3 className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2 text-gray-500">
+                    <Eye size={14}/> {content.resContent}
+                  </h3>
+                  <div className="bg-gray-50 dark:bg-black/40 p-4 rounded-lg max-h-60 overflow-y-auto text-sm text-gray-600 dark:text-gray-300 leading-relaxed border border-gray-100 dark:border-white/5 whitespace-pre-wrap font-mono">
+                    {result.fetched_text}
+                  </div>
+                </div>
+             )}
 
            </div>
         )}
