@@ -141,39 +141,76 @@ class NLPHandler:
     
     @staticmethod
     def fetch_reddit_text(identifier):
-        # ... (Bagian Reddit tetep sama kayak sebelumnya, gak perlu diubah)
-        headers = {'User-agent': 'Sentimind-Academic-Project/1.0'}
-        texts = []
         identifier = identifier.strip()
         
-        try:
-            if identifier.startswith("r/"):
-                subreddit = identifier[2:]
-                url = f"https://www.reddit.com/r/{subreddit}/hot.json?limit=15"
-                response = requests.get(url, headers=headers, timeout=10)
-                if response.status_code != 200: return None
+        # --- LIST SUMBER DATA (PRIORITAS) ---
+        # 1. Server Mirror (Aman buat Vercel/Scraping)
+        # 2. Server Asli (Buat Local yg pake VPN / Fallback terakhir)
+        sources = [
+            "https://reddit.invak.id",          # Mirror Indo (Biasanya kenceng di sini)
+            "https://redlib.vling.moe",         # Mirror Luar 1
+            "https://redlib.catsarch.com",      # Mirror Luar 2
+            "https://redlib.tux.pizza",         # Mirror Luar 3
+            "https://l.opnxng.com",             # Mirror Luar 4
+            "https://api.reddit.com",           # Server ASLI (Cadangan terakhir)
+        ]
+        
+        # Header pura-pura jadi browser beneran
+        headers = {
+            'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+        
+        texts = []
+        
+        for base_url in sources:
+            try:
+                print(f"🔄 Trying source: {base_url}...")
                 
-                data = response.json()
-                for item in data['data']['children']:
-                    post = item['data']
-                    if 'title' in post: texts.append(f"Title: {post['title']}")
-                    if 'selftext' in post and post['selftext']: texts.append(post['selftext'])
-
-            else:
-                username = identifier.replace("u/", "")
-                url = f"https://www.reddit.com/user/{username}/comments.json?limit=25"
-                response = requests.get(url, headers=headers, timeout=10)
-                if response.status_code != 200: return None
+                if identifier.startswith("r/"):
+                    subreddit = identifier[2:]
+                    url = f"{base_url}/r/{subreddit}/hot.json?limit=10"
+                else:
+                    username = identifier.replace("u/", "")
+                    url = f"{base_url}/user/{username}/comments.json?limit=25"
                 
+                # Timeout 8 detik biar server sempet mikir
+                response = requests.get(url, headers=headers, timeout=8)
+                
+                # Kalau gagal akses, skip ke server berikutnya
+                if response.status_code != 200:
+                    print(f"⚠️ {base_url} returned {response.status_code}")
+                    continue
+                
+                # Pastikan isinya JSON (bukan HTML error page)
+                content_type = response.headers.get("Content-Type", "")
+                if "application/json" not in content_type:
+                    print(f"⚠️ {base_url} returned HTML (Not JSON)")
+                    continue
+
                 data = response.json()
-                for item in data['data']['children']:
-                    if 'body' in item['data']:
-                        texts.append(item['data']['body'])
+                
+                # Validasi struktur data Reddit
+                children = data.get('data', {}).get('children', [])
+                if not children:
+                    print(f"⚠️ {base_url} data kosong/user not found")
+                    continue
+                    
+                # Ambil isinya
+                for item in children:
+                    post = item.get('data', {})
+                    if 'body' in post: texts.append(post['body'])
+                    elif 'selftext' in post and post['selftext']: texts.append(post['selftext'])
+                    elif 'title' in post: texts.append(f"Title: {post['title']}")
+                
+                # Kalau berhasil dapet teks, LANGSUNG BERHENTI & RETURN
+                if texts:
+                    print(f"✅ Success getting data from {base_url}")
+                    return "\n\n------------------------------------------------\n\n".join(texts)
 
-            if not texts: return None
-            
-            return "\n\n------------------------------------------------\n\n".join(texts)
-
-        except Exception as e:
-            print(f"Reddit Error: {e}")
-            return None
+            except Exception as e:
+                print(f"❌ Error connecting to {base_url}: {e}")
+                continue # Coba server berikutnya
+        
+        # Kalau udah coba semua server tetep gagal
+        print("❌ All sources failed.")
+        return None
