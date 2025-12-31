@@ -7,3 +7,4 @@ numpy
 deep-translator
 uvicorn
 requests
+praw

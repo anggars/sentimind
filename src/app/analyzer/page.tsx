@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "@/app/providers";
-import { Search, Tag, Smile, BrainCircuit, Lightbulb, BookOpen, MessageSquare, FileText, Globe, Eye } from "lucide-react";
+import { Search, Tag, Smile, BrainCircuit, Lightbulb, BookOpen, MessageSquare, FileText, Globe, Eye, AlertCircle } from "lucide-react";
 
 export default function AnalysisPage() {
   const { lang } = useLanguage();
@@ -12,6 +12,9 @@ export default function AnalysisPage() {
   
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+
+  const [errorType, setErrorType] = useState<string | null>(null);
+  const [backendErrorMsg, setBackendErrorMsg] = useState(""); 
 
   const t = {
     en: {
@@ -24,7 +27,13 @@ export default function AnalysisPage() {
       resSentiment: "Dominant Emotion",
       resKeywords: "Top Keywords",
       resContent: "Analyzed Content",
-      error: "Failed to connect to AI Server.",
+      errEmptyText: "Please enter some text first!",
+      errEmptyReddit: "Please enter a username or subreddit!",
+      errConnection: "Failed to connect to AI Server.",
+      
+      // TAMBAHAN: Terjemahan Error Backend
+      errUserNotFound: "User/Subreddit not found or content is private.",
+      
       guideTitle: "How to get accurate results?",
       guides: [
         { icon: MessageSquare, title: "Be Expressive", text: "Write naturally about your feelings, opinions, or daily life experiences." },
@@ -47,7 +56,13 @@ export default function AnalysisPage() {
       resSentiment: "Mood Dominan",
       resKeywords: "Kata Kunci",
       resContent: "Intip Isi Konten",
-      error: "Yah, gagal connect ke server nih.",
+      errEmptyText: "Eits, isi dulu dong teksnya!",
+      errEmptyReddit: "Username atau subredditnya mana?",
+      errConnection: "Yah, gagal connect ke server nih.",
+      
+      // TAMBAHAN: Terjemahan Error Backend (Gaul)
+      errUserNotFound: "User/Subreddit gak ketemu atau akunnya di-private nih.",
+      
       guideTitle: "Biar Hasilnya Akurat",
       guides: [
         { icon: MessageSquare, title: "Yang Ekspresif Dong", text: "Tulis aja secara natural soal perasaan atau opini lo. Gak usah jaim." },
@@ -64,21 +79,48 @@ export default function AnalysisPage() {
 
   const content = t[lang];
 
+  // Helper Error message makin pinter
+  const getErrorMessage = () => {
+    if (!errorType) return "";
+    if (errorType === "EMPTY_TEXT") return content.errEmptyText;
+    if (errorType === "EMPTY_REDDIT") return content.errEmptyReddit;
+    if (errorType === "CONNECTION") return content.errConnection;
+    
+    // Cek kode error dari backend
+    if (errorType === "BACKEND_ERROR") {
+        if (backendErrorMsg === "USER_NOT_FOUND") return content.errUserNotFound;
+        return backendErrorMsg || content.errConnection;
+    }
+    return "";
+  };
+
+  const currentErrorMsg = getErrorMessage();
+
   const handleAnalyze = async () => {
-    setLoading(true);
+    setErrorType(null);
+    setBackendErrorMsg("");
     setResult(null);
+
+    if (mode === "text" && !inputText.trim()) {
+      setErrorType("EMPTY_TEXT");
+      return;
+    }
+    if (mode === "reddit" && !redditUser.trim()) {
+      setErrorType("EMPTY_REDDIT");
+      return;
+    }
+
+    setLoading(true);
     
     try {
       let res;
       if (mode === "text") {
-         if (!inputText) return;
          res = await fetch("/api/predict", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: inputText }),
         });
       } else {
-         if (!redditUser) return;
          res = await fetch(`/api/reddit/${encodeURIComponent(redditUser)}`, {
            method: "GET"
          });
@@ -89,10 +131,11 @@ export default function AnalysisPage() {
       if (data.success) {
         setResult(data);
       } else {
-        alert(data.error || content.error);
+        setBackendErrorMsg(data.error); 
+        setErrorType("BACKEND_ERROR");
       }
-    } catch (error) {
-      alert(content.error);
+    } catch (err) {
+      setErrorType("CONNECTION");
     } finally {
       setLoading(false);
     }
@@ -101,8 +144,7 @@ export default function AnalysisPage() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (mode === "text" && inputText.trim()) handleAnalyze();
-      if (mode === "reddit" && redditUser.trim()) handleAnalyze();
+      handleAnalyze();
     }
   };
 
@@ -128,10 +170,10 @@ export default function AnalysisPage() {
             </p>
         </div>
 
-        {/* --- TOMBOL SWITCH MODE (PAKE GRID BIAR SAMA RATA) --- */}
+        {/* --- TOMBOL SWITCH MODE (GRID) --- */}
         <div className="grid grid-cols-2 gap-3 mt-8 w-full max-w-[340px] mx-auto">
             <button 
-              onClick={() => { setMode("text"); setResult(null); }}
+              onClick={() => { setMode("text"); setResult(null); setErrorType(null); }}
               className={`flex items-center justify-center gap-2 py-2.5 rounded-full font-bold text-sm transition-all border border-transparent
                 ${mode === "text" 
                   ? "bg-orange-600 text-white shadow-lg shadow-orange-500/20" 
@@ -140,7 +182,7 @@ export default function AnalysisPage() {
               <FileText size={16}/> {content.modeText}
             </button>
             <button 
-              onClick={() => { setMode("reddit"); setResult(null); }}
+              onClick={() => { setMode("reddit"); setResult(null); setErrorType(null); }}
               className={`flex items-center justify-center gap-2 py-2.5 rounded-full font-bold text-sm transition-all border border-transparent
                 ${mode === "reddit" 
                   ? "bg-[#FF4500] text-white shadow-lg shadow-[#FF4500]/20" 
@@ -153,16 +195,16 @@ export default function AnalysisPage() {
         <div className="liquid-glass p-1.5 shadow-2xl mt-6 max-w-3xl mx-auto w-full"> 
           <div className="bg-white/50 dark:bg-black/20 rounded-xl p-4 backdrop-blur-sm">
              
-             {/* AREA INPUT (DIBIKIN CONSISTENT HEIGHT) */}
+             {/* AREA INPUT */}
              <div className="min-h-[140px] flex flex-col justify-center">
                {mode === "text" ? (
                   <textarea
                     value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
+                    onChange={(e) => { setInputText(e.target.value); setErrorType(null); }}
                     onKeyDown={handleKeyDown}
                     placeholder={content.placeholder}
                     className="w-full bg-transparent outline-none text-base md:text-lg h-full resize-none placeholder:text-gray-400 dark:text-white text-gray-900"
-                    style={{ minHeight: '140px' }} // Paksa tinggi minimal sama
+                    style={{ minHeight: '140px' }} 
                   />
                ) : (
                   <div className="py-2 px-2 w-full">
@@ -173,7 +215,7 @@ export default function AnalysisPage() {
                       <input
                         type="text"
                         value={redditUser}
-                        onChange={(e) => setRedditUser(e.target.value)}
+                        onChange={(e) => { setRedditUser(e.target.value); setErrorType(null); }}
                         onKeyDown={handleKeyDown}
                         placeholder={content.redditPlaceholder}
                         className="w-full bg-white/50 dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl py-4 pl-12 pr-4 text-lg font-medium focus:border-[#FF4500] focus:ring-2 focus:ring-[#FF4500]/20 focus:outline-none transition-all text-gray-800 dark:text-white placeholder:text-gray-400"
@@ -186,10 +228,18 @@ export default function AnalysisPage() {
                )}
              </div>
 
-            <div className="flex justify-end mt-2 pt-2 border-t border-gray-500/10">
+            {/* --- ERROR WARNING (DYNAMIC LANG) --- */}
+            {currentErrorMsg && (
+              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3 text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-2">
+                <AlertCircle size={20} className="shrink-0" />
+                <span className="text-sm font-bold text-left">{currentErrorMsg}</span>
+              </div>
+            )}
+
+            <div className="flex justify-end mt-4 pt-2 border-t border-gray-500/10">
               <button
                 onClick={handleAnalyze}
-                disabled={loading || (mode === "text" ? !inputText : !redditUser)}
+                disabled={loading}
                 className={`flex items-center gap-2 text-white px-6 py-2 rounded-lg font-bold transition-all disabled:opacity-50 shadow-lg text-sm md:text-base
                   ${mode === "reddit" 
                     ? "bg-[#FF4500] hover:bg-orange-700 hover:shadow-[#FF4500]/30" 
@@ -202,13 +252,13 @@ export default function AnalysisPage() {
           </div>
         </div>
 
+        {/* HASIL ANALISIS */}
         {result && (
            <div className="w-full max-w-3xl mx-auto animate-in slide-in-from-bottom-10 mt-6 space-y-4">
              
-             {/* HASIL UTAMA (GRID) */}
              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                
-               {/* MBTI - Flex Col + h-full + Center Content */}
+               {/* MBTI */}
                <div className="liquid-glass p-4 border-t-4 border-orange-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl flex flex-col h-full">
                  <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-2">
                    <BrainCircuit size={12}/> {content.resMBTI}
@@ -218,7 +268,7 @@ export default function AnalysisPage() {
                  </div>
                </div>
                
-               {/* EMOTION - Flex Col + h-full + Center Content */}
+               {/* EMOTION */}
                <div className="liquid-glass p-4 border-t-4 border-green-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl flex flex-col h-full">
                  <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-2">
                    <Smile size={12}/> {content.resSentiment}
@@ -243,7 +293,6 @@ export default function AnalysisPage() {
                    ))}
                  </div>
                </div>
-
              </div>
 
              {/* PREVIEW KONTEN */}
@@ -257,10 +306,10 @@ export default function AnalysisPage() {
                   </div>
                 </div>
              )}
-
            </div>
         )}
 
+        {/* PANDUAN */}
         {!result && (
           <div className="mt-16 w-full max-w-3xl mx-auto animate-in slide-in-from-bottom-10 delay-200">
             <h3 className="text-lg font-bold text-center mb-6 text-gray-500 uppercase tracking-widest text-xs">

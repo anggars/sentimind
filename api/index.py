@@ -18,14 +18,15 @@ app.add_api_route("/api/quiz", submit_quiz, methods=["POST"])
 def health_check():
     return {"status": "online", "mode": "local_dev_aggregated"}
 
-@app.get("/api/reddit/{username:path}") # Pastikan ada :path
+@app.get("/api/reddit/{username:path}") 
 def analyze_reddit_user(username: str):
     text = NLPHandler.fetch_reddit_text(username)
     
     if not text:
         return {
             "success": False, 
-            "error": "User/Subreddit tidak ditemukan atau tidak ada konten publik."
+            # GANTI JADI KODE ERROR SINGKAT
+            "error": "USER_NOT_FOUND" 
         }
     
     result = NLPHandler.predict_all(text)
@@ -35,5 +36,5 @@ def analyze_reddit_user(username: str):
         "mbti_type": result["mbti"],
         "emotion": result["emotion"],
         "keywords": result["keywords"],
-        "fetched_text": text  # <--- TAMBAHAN PENTING: Kirim teks aslinya balik
+        "fetched_text": text
     }
