@@ -172,6 +172,10 @@ export default function AnalysisPage() {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
+      const isMobile = window.innerWidth < 768;
+      if (mode === "text" && isMobile) {
+        return; 
+      }
       e.preventDefault();
       handleAnalyze();
     }
@@ -340,13 +344,19 @@ export default function AnalysisPage() {
             <h3 className="text-lg font-bold text-center mb-6 text-gray-500 uppercase tracking-widest text-xs">
               {content.guideTitle}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
               {content.guides.map((item, idx) => (
-                <div key={idx} className="p-4 rounded-xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm hover:bg-auto/50 transition-colors">
-                  <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center mb-3 mx-auto">
-                    <item.icon size={16} />
+                <div key={idx} className="group p-6 border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 rounded-xl hover:shadow-lg transition-all duration-300">
+                  
+                  <div className="p-2.5 bg-orange-100 dark:bg-orange-500/20 w-fit rounded-lg mb-4 text-orange-600 dark:text-orange-400 group-hover:scale-110 transition-transform duration-300">
+                    <item.icon className="w-5 h-5" />
                   </div>
-                  <h4 className="font-bold text-sm mb-1 text-gray-800 dark:text-gray-200">{item.title}</h4>
+
+                  <h4 className="text-sm font-bold mb-2 text-gray-900 dark:text-white tracking-tight">
+                    {item.title}
+                  </h4>
+
                   <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                     {item.text}
                   </p>

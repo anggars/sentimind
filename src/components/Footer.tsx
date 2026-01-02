@@ -16,7 +16,7 @@ export default function Footer() {
            <Link href="/" className="hover:text-orange-600 transition-colors">Home</Link>
            <Link href="/analyzer" className="hover:text-orange-600 transition-colors">Analyzer</Link>
            <Link href="/quiz" className="hover:text-orange-600 transition-colors">Mini Test</Link>
-           <Link href="/types" className="hover:text-orange-600 transition-colors">{lang === 'en' ? "MBTI Types" : "Tipe MBTI"}</Link>
+           <Link href="/types" className="hover:text-orange-600 transition-colors">{lang === 'en' ? "Types" : "Tipe"}</Link>
         </div>
         <p className="text-gray-500 dark:text-gray-400 text-xs">
           © {year} Sentimind Project. {"All rights reserved."}

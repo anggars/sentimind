@@ -4,43 +4,33 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
-import { Sun, Moon, BrainCircuit, Menu, X } from "lucide-react"; // Tambah Menu & X
+import { Sun, Moon, BrainCircuit, Menu, X } from "lucide-react";
 import { useLanguage } from "@/app/providers";
+import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme();
   const { lang, toggleLang } = useLanguage();
   const pathname = usePathname();
   
-  // STATE
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State menu HP
-  const [mounted, setMounted] = useState(false); // State Anti-Hydration Error
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // 1. FIX HYDRATION: Tunggu component nempel di browser dulu baru render tema
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  // 2. LOGIKA SCROLL
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const isActive = (path: string) => 
-    pathname === path 
-      ? "text-orange-600 dark:text-orange-400 font-bold" 
-      : "text-gray-500 hover:text-orange-500 transition-colors";
+  const getLinkVariant = (path: string) => pathname === path ? "secondary" : "ghost";
 
   const navLinks = [
-    { href: "/", label: lang === 'en' ? "HOME" : "BERANDA" },
-    { href: "/analyzer", label: lang === 'en' ? "ANALYZER" : "ANALISIS" },
-    { href: "/quiz", label: lang === 'en' ? "MINI TEST" : "TES MINI" },
-    { href: "/types", label: lang === 'en' ? "MBTI TYPES" : "TIPE MBTI" },
+    { href: "/", label: lang === 'en' ? "Home" : "Beranda" },
+    { href: "/analyzer", label: lang === 'en' ? "Analyzer" : "Analisis" },
+    { href: "/quiz", label: lang === 'en' ? "Mini Test" : "Tes Mini" },
+    { href: "/types", label: lang === 'en' ? "Types" : "Tipe" },
   ];
 
   return (
@@ -48,105 +38,100 @@ export default function Navbar() {
       <nav 
         className={`
           fixed left-1/2 -translate-x-1/2 z-50 
-          flex justify-between items-center px-6 py-4
-          navbar-transition
+          flex justify-between items-center px-4 py-3
+          /* GANTI BAGIAN TRANSISI DI SINI: */
+          transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] will-change-[width,top,background]
           ${isScrolled 
-            ? "top-4 w-[90%] max-w-5xl rounded-2xl liquid-glass shadow-2xl border border-orange-500/20" 
-            : "top-0 w-full rounded-none bg-transparent border-b border-transparent backdrop-blur-none" 
+            /* SCROLLED STATE: 
+               - top-4: Turun dikit
+               - w-[92%]: Lebar di layar kecil
+               - md:w-[64rem]: KUNCI ANIMASI! Kita set lebar fix (setara max-w-5xl) biar width-nya yang animasi, bukan max-width.
+               - rounded-[12px]: Jadi kotak tumpul (sebelumnya rounded-full)
+            */
+            ? "top-4 w-[92%] md:w-[64rem] rounded-[12px] bg-white/80 dark:bg-black/80 backdrop-blur-md border border-gray-200 dark:border-white/10 shadow-sm" 
+            /* DEFAULT STATE:
+               - top-0: Nempel atas
+               - w-full: Lebar penuh
+               - rounded-none: Kotak
+            */
+            : "top-0 w-full bg-transparent border-b border-transparent" 
           }
         `}
       >
         {/* LOGO */}
-        <Link href="/" className="flex items-center space-x-2 rtl:space-x-reverse group">
-          <div className="p-2 bg-orange-600 rounded-lg group-hover:rotate-12 transition-transform">
-             <BrainCircuit className="text-white w-6 h-6" />
+        <Link href="/" className="flex items-center gap-2 pl-2">
+          <div className="bg-orange-600 p-1.5 rounded-[8px]">
+             <BrainCircuit className="text-white w-5 h-5" />
           </div>
-          <span className="self-center text-2xl font-black whitespace-nowrap text-gray-900 dark:text-white tracking-tight">
+          <span className="font-bold text-lg tracking-tight text-gray-900 dark:text-white">
             Sentimind<span className="text-orange-600">.</span>
           </span>
         </Link>
 
-        {/* --- DESKTOP MENU (Hidden di HP) --- */}
-        <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <div className="flex gap-6">
-            {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className={isActive(link.href)}>
+        {/* DESKTOP MENU */}
+        <div className="hidden md:flex items-center gap-1">
+          {navLinks.map((link) => (
+            <Button 
+              key={link.href}
+              asChild
+              variant={getLinkVariant(link.href)} 
+              size="sm" 
+              className={`cursor-pointer text-sm font-medium ${pathname === link.href ? "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30" : "text-gray-600 dark:text-gray-400"}`}
+            >
+              <Link href={link.href}>
                 {link.label}
               </Link>
-            ))}
-          </div>
-          
-          {/* KONFIGURASI KANAN (Lang + Theme) */}
-          <div className="flex items-center gap-3 border-l border-gray-300 dark:border-white/10 pl-4">
-            <button 
-              onClick={toggleLang}
-              className="text-xs font-bold px-2 py-1 rounded hover:bg-orange-500/10 transition-colors"
-            >
-              {lang.toUpperCase()}
-            </button>
-
-            <button 
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-2 rounded-full hover:bg-orange-500/10 transition-colors"
-            >
-              {/* FIX HYDRATION: Kalau belum mounted, render kotak kosong seukuran icon biar gak layout shift */}
-              {!mounted ? (
-                <div className="w-5 h-5" /> 
-              ) : theme === "dark" ? (
-                <Sun className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
-            </button>
-          </div>
+            </Button>
+          ))}
         </div>
 
-        {/* --- MOBILE HAMBURGER (Visible cuma di HP) --- */}
-        <div className="md:hidden flex items-center gap-4">
-           {/* Tombol Tema (Mobile) */}
-           <button 
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-2 rounded-full hover:bg-orange-500/10 transition-colors"
-            >
-               {!mounted ? <div className="w-5 h-5" /> : theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
+        {/* KANAN: Lang + Theme */}
+        <div className="flex items-center gap-2 pr-2">
+          <Button 
+            onClick={toggleLang}
+            variant="ghost"
+            size="sm"
+            className="w-9 h-9 p-0 text-xs font-bold text-gray-500"
+          >
+            {lang.toUpperCase()}
+          </Button>
 
-            {/* Tombol Menu Hamburger */}
-            <button 
+          <Button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            variant="ghost"
+            size="icon"
+            className="w-9 h-9 rounded-full text-gray-500"
+          >
+            {!mounted ? <div className="w-4 h-4" /> : theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </Button>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-orange-600 dark:text-orange-400 focus:outline-none"
             >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+          </div>
         </div>
       </nav>
 
-      {/* --- MOBILE MENU OVERLAY (Slide Down) --- */}
-      {/* Kita taruh di luar nav biar gak keganggu layout flex */}
-      <div className={`
-        fixed inset-0 z-40 bg-white/95 dark:bg-black/95 backdrop-blur-xl transition-transform duration-300 ease-in-out pt-32 px-6 flex flex-col gap-6
-        ${isMobileMenuOpen ? "translate-y-0" : "-translate-y-full"}
-      `}>
-        {navLinks.map((link) => (
-          <Link 
-            key={link.href} 
-            href={link.href} 
-            onClick={() => setIsMobileMenuOpen(false)} // Tutup menu pas diklik
-            className={`text-2xl font-bold ${pathname === link.href ? "text-orange-500" : "text-gray-500"}`}
-          >
-            {link.label}
-          </Link>
-        ))}
-        
-        <hr className="border-gray-200 dark:border-white/10" />
-        
-        <button 
-          onClick={() => { toggleLang(); setIsMobileMenuOpen(false); }}
-          className="text-xl font-bold text-left text-gray-600 dark:text-gray-300 flex items-center gap-2"
-        >
-          Change Language: <span className="text-orange-500">{lang.toUpperCase()}</span>
-        </button>
-      </div>
+      {/* MOBILE MENU */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-40 bg-white dark:bg-black pt-24 px-6 animate-in slide-in-from-top-10 fade-in duration-200">
+           <div className="flex flex-col gap-2">
+            {navLinks.map((link) => (
+              <Link key={link.href} href={link.href} onClick={() => setIsMobileMenuOpen(false)}>
+                <Button variant="ghost" size="lg" className="w-full justify-start text-lg font-medium">
+                  {link.label}
+                </Button>
+              </Link>
+            ))}
+           </div>
+        </div>
+      )}
     </>
   );
 }
