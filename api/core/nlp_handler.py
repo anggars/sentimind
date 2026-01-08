@@ -32,12 +32,23 @@ class NLPHandler:
     @staticmethod
     def load_models():
         global _model_mbti, _model_emotion
+        print(f"📂 Loading models from: {BASE_DIR}")
+        print(f"📁 MBTI path: {MBTI_PATH} (exists: {os.path.exists(MBTI_PATH)})")
+        print(f"📁 Emotion path: {EMOTION_PATH} (exists: {os.path.exists(EMOTION_PATH)})")
+        
         if _model_mbti is None and os.path.exists(MBTI_PATH):
-            try: _model_mbti = joblib.load(MBTI_PATH)
-            except: pass
+            try: 
+                _model_mbti = joblib.load(MBTI_PATH)
+                print("✅ MBTI model loaded successfully")
+            except Exception as e: 
+                print(f"❌ MBTI model load error: {e}")
+        
         if _model_emotion is None and os.path.exists(EMOTION_PATH):
-            try: _model_emotion = joblib.load(EMOTION_PATH)
-            except: pass
+            try: 
+                _model_emotion = joblib.load(EMOTION_PATH)
+                print("✅ Emotion model loaded successfully")
+            except Exception as e: 
+                print(f"❌ Emotion model load error: {e}")
 
     @staticmethod
     def translate_to_english(text):
@@ -106,46 +117,76 @@ class NLPHandler:
     @staticmethod
     def _fetch_official_api(video_id, api_key):
         print(f"🔑 Using Official API Key for {video_id}...")
+        
+        result = {
+            "video": None,
+            "comments": [],
+            "text_for_analysis": ""
+        }
         text_parts = []
         
         try:
-            # 1. Ambil Metadata
-            url_meta = f"https://www.googleapis.com/youtube/v3/videos?part=snippet&id={video_id}&key={api_key}"
+            # 1. Ambil Metadata Video
+            url_meta = f"https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id={video_id}&key={api_key}"
             res_meta = requests.get(url_meta, timeout=5)
             
             if res_meta.status_code == 200:
                 data = res_meta.json()
                 if "items" in data and len(data["items"]) > 0:
-                    snippet = data["items"][0]["snippet"]
-                    # Unescape biar &quot; jadi " dan &#39; jadi '
+                    item = data["items"][0]
+                    snippet = item["snippet"]
+                    stats = item.get("statistics", {})
+                    
+                    # Unescape HTML entities
                     title = html.unescape(snippet['title'])
                     desc = html.unescape(snippet['description'])
-                    text_parts.append(f"Title: {title}")
-                    text_parts.append(f"Description: {desc}")
+                    
+                    # Get best thumbnail
+                    thumbnails = snippet.get('thumbnails', {})
+                    thumbnail = (thumbnails.get('maxres') or thumbnails.get('high') or thumbnails.get('medium') or thumbnails.get('default', {})).get('url', '')
+                    
+                    result["video"] = {
+                        "title": title,
+                        "description": desc,
+                        "thumbnail": thumbnail,
+                        "channel": snippet.get('channelTitle', 'Unknown Channel'),
+                        "publishedAt": snippet.get('publishedAt', ''),
+                        "viewCount": stats.get('viewCount', '0'),
+                        "likeCount": stats.get('likeCount', '0'),
+                        "commentCount": stats.get('commentCount', '0')
+                    }
+                    
+                    text_parts.append(title)
+                    text_parts.append(desc)
             
-            # 2. Ambil Komentar
-            url_comm = f"https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId={video_id}&maxResults=30&order=relevance&key={api_key}"
+            # 2. Ambil Komentar dengan detail
+            url_comm = f"https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId={video_id}&maxResults=20&order=relevance&key={api_key}"
             res_comm = requests.get(url_comm, timeout=5)
             
             if res_comm.status_code == 200:
                 data = res_comm.json()
-                comments = []
                 for item in data.get("items", []):
-                    raw_comm = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
-                    # Bersihkan tag HTML <b> <br>
-                    clean_comm = re.sub(r'<[^>]+>', '', raw_comm)
-                    # Bersihkan entities &quot; &#39;
-                    clean_comm = html.unescape(clean_comm)
-                    comments.append(clean_comm)
-                
-                if comments:
-                    text_parts.append("\n\n--- Top Comments (Community Vibe) ---\n")
-                    text_parts.extend(comments)
+                    comment_snippet = item["snippet"]["topLevelComment"]["snippet"]
+                    raw_text = comment_snippet.get("textDisplay", "")
+                    clean_text = re.sub(r'<[^>]+>', '', raw_text)
+                    clean_text = html.unescape(clean_text)
+                    
+                    result["comments"].append({
+                        "text": clean_text,
+                        "author": comment_snippet.get("authorDisplayName", "Anonymous"),
+                        "authorImage": comment_snippet.get("authorProfileImageUrl", ""),
+                        "likeCount": comment_snippet.get("likeCount", 0),
+                        "publishedAt": comment_snippet.get("publishedAt", ""),
+                        "replyCount": item["snippet"].get("totalReplyCount", 0)
+                    })
+                    
+                    text_parts.append(clean_text)
             
             if not text_parts:
                 return None
-                
-            return "\n\n".join(text_parts)
+            
+            result["text_for_analysis"] = " ".join(text_parts)
+            return result
 
         except Exception as e:
             print(f"❌ Official API Error: {e}")

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader2, Sparkles, AlertCircle, Mic, MicOff } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/app/providers";
 
@@ -17,8 +18,8 @@ interface Message {
     content: string;
 }
 
-// --- TYPEWRITER COMPONENT ---
-const Typewriter = ({ text, speed = 10 }: { text: string; speed?: number }) => {
+// --- TYPEWRITER COMPONENT dengan Markdown Real-time ---
+const Typewriter = ({ text, speed = 10, onTyping }: { text: string; speed?: number; onTyping?: () => void }) => {
     const [displayedText, setDisplayedText] = useState("");
     const [isTyping, setIsTyping] = useState(true);
 
@@ -30,6 +31,8 @@ const Typewriter = ({ text, speed = 10 }: { text: string; speed?: number }) => {
             if (i < text.length) {
                 setDisplayedText((prev) => prev + text.charAt(i));
                 i++;
+                // Scroll ke bawah setiap karakter baru
+                onTyping?.();
             } else {
                 clearInterval(interval);
                 setIsTyping(false);
@@ -37,17 +40,39 @@ const Typewriter = ({ text, speed = 10 }: { text: string; speed?: number }) => {
         }, speed);
 
         return () => clearInterval(interval);
-    }, [text, speed]);
+    }, [text, speed, onTyping]);
 
-    if (isTyping) {
-        return (
-            <span className="whitespace-pre-wrap">
+    return (
+        <div className="markdown-content">
+            <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                    // Style untuk bold
+                    strong: ({ children }) => <strong className="font-bold text-orange-500">{children}</strong>,
+                    // Style untuk table
+                    table: ({ children }) => <table className="border-collapse my-4 w-full text-sm">{children}</table>,
+                    thead: ({ children }) => <thead className="bg-orange-500/20">{children}</thead>,
+                    th: ({ children }) => <th className="border border-gray-600 px-3 py-2 text-left font-bold">{children}</th>,
+                    td: ({ children }) => <td className="border border-gray-700 px-3 py-2">{children}</td>,
+                    // Style untuk list
+                    ul: ({ children }) => <ul className="list-disc list-inside my-2 space-y-1">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal list-inside my-2 space-y-1">{children}</ol>,
+                    li: ({ children }) => <li className="ml-2">{children}</li>,
+                    // Style untuk code
+                    code: ({ children }) => <code className="bg-orange-500/20 px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>,
+                    // Style untuk heading
+                    h1: ({ children }) => <h1 className="text-xl font-bold mt-4 mb-2">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-lg font-bold mt-3 mb-2">{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-base font-bold mt-2 mb-1">{children}</h3>,
+                }}
+            >
                 {displayedText}
+            </ReactMarkdown>
+            {isTyping && (
                 <span className="inline-block w-1.5 h-4 ml-1 align-middle bg-orange-500 animate-pulse" />
-            </span>
-        );
-    }
-    return <ReactMarkdown>{text}</ReactMarkdown>;
+            )}
+        </div>
+    );
 };
 
 export default function ChatPage() {
@@ -278,7 +303,7 @@ export default function ChatPage() {
                                     : "text-gray-800 dark:text-gray-200 px-2 py-1 prose dark:prose-invert max-w-none"
                             )}>
                                 {msg.role === "bot" ? (
-                                    <Typewriter text={msg.content} speed={15} />
+                                    <Typewriter text={msg.content} speed={15} onTyping={scrollToBottom} />
                                 ) : (
                                     msg.content
                                 )}

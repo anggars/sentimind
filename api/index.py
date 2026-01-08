@@ -69,29 +69,35 @@ def health_check():
 @app.get("/api/youtube/{video_id}") 
 def analyze_youtube_video(video_id: str):
     # Panggil fungsi fetch YouTube
-    text = NLPHandler.fetch_youtube_transcript(video_id)
+    data = NLPHandler.fetch_youtube_transcript(video_id)
     
-    if not text:
+    if not data:
         return {
             "success": False, 
-            "error": "NO_TRANSCRIPT" # Kode error kalau video gak ada subtitle
+            "error": "NO_TRANSCRIPT"
         }
     
-    # Analisis teks transkripnya
-    result = NLPHandler.predict_all(text)
+    # Handle structured data from official API
+    if isinstance(data, dict) and "text_for_analysis" in data:
+        text_for_analysis = data["text_for_analysis"]
+        result = NLPHandler.predict_all(text_for_analysis)
+        
+        return {
+            "success": True,
+            "mbti_type": result["mbti"],
+            "emotion": result["emotion"],
+            "keywords": result["keywords"],
+            "video": data.get("video"),
+            "comments": data.get("comments", []),
+            "fetched_text": text_for_analysis
+        }
     
-    response_data = {
+    # Fallback for plain text (transcript fallback)
+    result = NLPHandler.predict_all(data)
+    return {
         "success": True,
         "mbti_type": result["mbti"],
         "emotion": result["emotion"],
         "keywords": result["keywords"],
+        "fetched_text": data
     }
-
-    # Handle kalo inputnya dari YouTube (dict ada 'meta')
-    if isinstance(text, dict) and "meta" in text:
-        response_data["fetched_text"] = text["text_for_analysis"]
-        response_data["meta"] = text["meta"]
-    else:
-        response_data["fetched_text"] = text
-
-    return response_data

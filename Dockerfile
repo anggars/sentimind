@@ -1,7 +1,7 @@
 # Dockerfile untuk Hugging Face Spaces
 # Build dan jalankan backend FastAPI saja
 
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # Create non-root user (required by HF Spaces)
 RUN useradd -m -u 1000 user
