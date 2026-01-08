@@ -18,6 +18,40 @@ interface Message {
     content: string;
 }
 
+// --- REUSABLE MARKDOWN COMPONENTS ---
+const markdownComponents = {
+    // Style untuk bold
+    strong: ({ children }: any) => <strong className="font-bold text-orange-500">{children}</strong>,
+    // Style untuk table
+    table: ({ children }: any) => <div className="overflow-x-auto my-4"><table className="border-collapse w-full text-sm">{children}</table></div>,
+    thead: ({ children }: any) => <thead className="bg-orange-500/10 dark:bg-orange-500/20">{children}</thead>,
+    th: ({ children }: any) => <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-bold">{children}</th>,
+    td: ({ children }: any) => <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">{children}</td>,
+    // Style untuk list
+    ul: ({ children }: any) => <ul className="list-disc list-inside my-2 space-y-1">{children}</ul>,
+    ol: ({ children }: any) => <ol className="list-decimal list-inside my-2 space-y-1">{children}</ol>,
+    // Code block styling
+    code: ({ node, inline, className, children, ...props }: any) => {
+        const match = /language-(\w+)/.exec(className || "");
+        return !inline ? (
+            <div className="rounded-md overflow-hidden my-2 border border-gray-200 dark:border-gray-700">
+                <div className="bg-gray-100 dark:bg-gray-800 px-3 py-1 text-xs text-gray-500 font-mono border-b border-gray-200 dark:border-gray-700">
+                    {match ? match[1] : 'code'}
+                </div>
+                <div className="bg-gray-50 dark:bg-[#1e1e1e] p-3 overflow-x-auto">
+                    <code className={className} {...props}>
+                        {children}
+                    </code>
+                </div>
+            </div>
+        ) : (
+            <code className="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-sm font-mono text-orange-600 dark:text-orange-400" {...props}>
+                {children}
+            </code>
+        );
+    }
+};
+
 // --- TYPEWRITER COMPONENT dengan Markdown Real-time ---
 const Typewriter = ({ text, speed = 10, onTyping, onComplete }: { text: string; speed?: number; onTyping?: () => void; onComplete?: () => void }) => {
     const [displayedText, setDisplayedText] = useState("");
@@ -47,25 +81,7 @@ const Typewriter = ({ text, speed = 10, onTyping, onComplete }: { text: string; 
         <div className="markdown-content">
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
-                components={{
-                    // Style untuk bold
-                    strong: ({ children }) => <strong className="font-bold text-orange-500">{children}</strong>,
-                    // Style untuk table
-                    table: ({ children }) => <table className="border-collapse my-4 w-full text-sm">{children}</table>,
-                    thead: ({ children }) => <thead className="bg-orange-500/20">{children}</thead>,
-                    th: ({ children }) => <th className="border border-gray-600 px-3 py-2 text-left font-bold">{children}</th>,
-                    td: ({ children }) => <td className="border border-gray-700 px-3 py-2">{children}</td>,
-                    // Style untuk list
-                    ul: ({ children }) => <ul className="list-disc list-inside my-2 space-y-1">{children}</ul>,
-                    ol: ({ children }) => <ol className="list-decimal list-inside my-2 space-y-1">{children}</ol>,
-                    li: ({ children }) => <li className="ml-2">{children}</li>,
-                    // Style untuk code
-                    code: ({ children }) => <code className="bg-orange-500/20 px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>,
-                    // Style untuk heading
-                    h1: ({ children }) => <h1 className="text-xl font-bold mt-4 mb-2">{children}</h1>,
-                    h2: ({ children }) => <h2 className="text-lg font-bold mt-3 mb-2">{children}</h2>,
-                    h3: ({ children }) => <h3 className="text-base font-bold mt-2 mb-1">{children}</h3>,
-                }}
+                components={markdownComponents}
             >
                 {displayedText}
             </ReactMarkdown>
@@ -90,19 +106,20 @@ export default function ChatPage() {
     const recognitionRef = useRef<any>(null);
 
     // Only auto-scroll if user is already near the bottom
-    const scrollToBottom = () => {
+    const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
         const container = messagesContainerRef.current;
         if (!container) return;
 
-        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
+        // Threshold lebih kecil (50px) biar user gampang scroll ke atas tanpa ditarik balik
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
         if (isNearBottom) {
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+            messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
         }
     };
 
     useEffect(() => {
         // Force scroll on new messages
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+        scrollToBottom("smooth");
     }, [messages, isLoading]);
 
     // Initialize Speech Recognition
@@ -315,7 +332,10 @@ export default function ChatPage() {
                                 {msg.role === "bot" ? (
                                     typedMessages.has(msg.id) ? (
                                         <div className="markdown-content">
-                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                            <ReactMarkdown
+                                                remarkPlugins={[remarkGfm]}
+                                                components={markdownComponents}
+                                            >
                                                 {msg.content}
                                             </ReactMarkdown>
                                         </div>
@@ -323,7 +343,7 @@ export default function ChatPage() {
                                         <Typewriter
                                             text={msg.content}
                                             speed={15}
-                                            onTyping={scrollToBottom}
+                                            onTyping={() => scrollToBottom("auto")}
                                             onComplete={() => setTypedMessages(prev => new Set([...prev, msg.id]))}
                                         />
                                     )
