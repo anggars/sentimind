@@ -3,6 +3,8 @@ uvicorn
 python-dotenv
 pydantic
 numpy
+scikit-learn
+joblib
 deep-translator
 requests
 youtube-transcript-api
