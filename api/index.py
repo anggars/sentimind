@@ -80,10 +80,18 @@ def analyze_youtube_video(video_id: str):
     # Analisis teks transkripnya
     result = NLPHandler.predict_all(text)
     
-    return {
+    response_data = {
         "success": True,
         "mbti_type": result["mbti"],
         "emotion": result["emotion"],
         "keywords": result["keywords"],
-        "fetched_text": text
     }
+
+    # Handle kalo inputnya dari YouTube (dict ada 'meta')
+    if isinstance(text, dict) and "meta" in text:
+        response_data["fetched_text"] = text["text_for_analysis"]
+        response_data["meta"] = text["meta"]
+    else:
+        response_data["fetched_text"] = text
+
+    return response_data
