@@ -2,6 +2,7 @@ fastapi
 uvicorn
 python-dotenv
 pydantic
+numpy
 deep-translator
 requests
 youtube-transcript-api
