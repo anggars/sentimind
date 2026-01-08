@@ -8,10 +8,32 @@ load_dotenv()
 
 from api.predict import predict_endpoint
 from api.quiz import get_quiz_questions, submit_quiz
+from api.core.chatbot import MBTIChatbot
+from pydantic import BaseModel
+
+# Init Chatbot (Load dataset sekali di awal)
+chatbot = MBTIChatbot()
+
+class ChatRequest(BaseModel):
+    message: str
+    lang: str = "id" # Default ke Indo kalo gak dikirim
+
+
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+# Tambahkan CORS biar frontend (port 3000) bisa akses backend (port 8000)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Di produksi, ganti "*" dengan domain frontend lu
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # --- TAMBAHAN DEBUGGING (CEK SAAT SERVER NYALA) ---
+
 @app.on_event("startup")
 async def startup_event():
     api_key = os.getenv("YOUTUBE_API_KEY")
@@ -27,6 +49,11 @@ async def startup_event():
 app.add_api_route("/api/predict", predict_endpoint, methods=["POST"])
 app.add_api_route("/api/quiz", get_quiz_questions, methods=["GET"])
 app.add_api_route("/api/quiz", submit_quiz, methods=["POST"])
+
+@app.post("/api/chat")
+async def chat_endpoint(request: ChatRequest):
+    return {"response": chatbot.generate_response(request.message, request.lang)}
+
 
 @app.get("/api/hello")
 def health_check():

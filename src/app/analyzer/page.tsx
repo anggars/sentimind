@@ -5,16 +5,16 @@ import { Search, Tag, Smile, BrainCircuit, Lightbulb, BookOpen, MessageSquare, F
 
 export default function AnalysisPage() {
   const { lang } = useLanguage();
-  const [mode, setMode] = useState<"text" | "youtube">("text"); 
-  
+  const [mode, setMode] = useState<"text" | "youtube">("text");
+
   const [inputText, setInputText] = useState("");
-  const [youtubeUrl, setYoutubeUrl] = useState(""); 
-  
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const [errorType, setErrorType] = useState<string | null>(null);
-  const [backendErrorMsg, setBackendErrorMsg] = useState(""); 
+  const [backendErrorMsg, setBackendErrorMsg] = useState("");
 
   const t = {
     en: {
@@ -22,25 +22,25 @@ export default function AnalysisPage() {
       desc: "Paste your text or YouTube link. Let AI decode the personality.",
       placeholder: "Type your story here...",
       btnAnalyze: "Analyze Now",
-      btnLoading: "Processing...",
+      btnLoadingText: "Reading...",
+      btnLoadingYoutube: "Watching...",
       resMBTI: "MBTI Type",
       resSentiment: "Dominant Emotion",
       resKeywords: "Top Keywords",
-      // GANTI LABEL BIAR JUJUR
-      resContent: "Analyzed Content", 
-      
+      resContent: "Analyzed Content",
+
       errEmptyText: "Please enter some text first!",
       errEmptyYoutube: "Please paste a YouTube URL!",
       errInvalidYoutube: "Invalid YouTube URL format.",
       errConnection: "Failed to connect to AI Server.",
       errNoTranscript: "This video has no subtitles/transcript to analyze.",
-      
+
       modeText: "Text Input",
       modeYoutube: "YouTube Video",
       ytPlaceholder: "Paste YouTube Link (e.g., https://youtu.be/...)",
       ytTip: "Tip: Works best on videos with spoken words (podcasts, vlogs).",
       btnYoutube: "Analyze Video",
-      
+
       guideTitle: "How to get accurate results?",
       guides: [
         { icon: MessageSquare, title: "Be Expressive", text: "Write naturally about your feelings, opinions, or daily life experiences." },
@@ -53,25 +53,26 @@ export default function AnalysisPage() {
       desc: "Tempel curhatan atau link YouTube. Biar AI yang bedah kepribadiannya.",
       placeholder: "Tulis cerita atau unek-unek lo di sini...",
       btnAnalyze: "Analisis Sekarang",
-      btnLoading: "Lagi Nonton...",
+      btnLoadingText: "Lagi Baca...",
+      btnLoadingYoutube: "Lagi Nonton...",
       resMBTI: "Tipe MBTI",
       resSentiment: "Mood Dominan",
       resKeywords: "Kata Kunci",
       // GANTI LABEL BIAR JUJUR
       resContent: "Data Video & Komentar",
-      
+
       errEmptyText: "Eits, isi dulu dong teksnya!",
       errEmptyYoutube: "Link YouTube-nya mana?",
       errInvalidYoutube: "Link YouTube-nya gak valid nih.",
       errConnection: "Yah, gagal connect ke server nih.",
       errNoTranscript: "Video ini gak ada subtitle-nya, cari yang lain gih.",
-      
+
       modeText: "Tulis Manual",
       modeYoutube: "Link YouTube",
       ytPlaceholder: "Tempel Link YouTube (misal: https://youtu.be/...)",
       ytTip: "Tips: Paling mantep buat video podcast, vlog, atau opini.",
       btnYoutube: "Bedah Video",
-      
+
       guideTitle: "Biar Hasilnya Akurat",
       guides: [
         { icon: MessageSquare, title: "Yang Ekspresif Dong", text: "Tulis aja secara natural soal perasaan atau opini lo. Gak usah jaim." },
@@ -96,10 +97,10 @@ export default function AnalysisPage() {
     if (errorType === "EMPTY_YOUTUBE") return content.errEmptyYoutube;
     if (errorType === "INVALID_YOUTUBE") return content.errInvalidYoutube;
     if (errorType === "CONNECTION") return content.errConnection;
-    
+
     if (errorType === "BACKEND_ERROR") {
-        if (backendErrorMsg === "NO_TRANSCRIPT") return content.errNoTranscript;
-        return backendErrorMsg || content.errConnection;
+      if (backendErrorMsg === "NO_TRANSCRIPT") return content.errNoTranscript;
+      return backendErrorMsg || content.errConnection;
     }
     return "";
   };
@@ -113,60 +114,60 @@ export default function AnalysisPage() {
 
     // --- VALIDASI YOUTUBE ---
     if (mode === "youtube") {
-        if (!youtubeUrl.trim()) {
-            setErrorType("EMPTY_YOUTUBE");
-            return;
-        }
-        const videoId = extractVideoId(youtubeUrl);
-        if (!videoId) {
-            setErrorType("INVALID_YOUTUBE");
-            return;
-        }
-        
-        // Panggil API dengan Video ID
-        setLoading(true);
-        try {
-            const res = await fetch(`/api/youtube/${videoId}`, { method: "GET" });
-            const data = await res.json();
-            if (data.success) {
-                setResult(data);
-            } else {
-                setBackendErrorMsg(data.error);
-                setErrorType("BACKEND_ERROR");
-            }
-        } catch (err) {
-            setErrorType("CONNECTION");
-        } finally {
-            setLoading(false);
-        }
+      if (!youtubeUrl.trim()) {
+        setErrorType("EMPTY_YOUTUBE");
         return;
+      }
+      const videoId = extractVideoId(youtubeUrl);
+      if (!videoId) {
+        setErrorType("INVALID_YOUTUBE");
+        return;
+      }
+
+      // Panggil API dengan Video ID
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/youtube/${videoId}`, { method: "GET" });
+        const data = await res.json();
+        if (data.success) {
+          setResult(data);
+        } else {
+          setBackendErrorMsg(data.error);
+          setErrorType("BACKEND_ERROR");
+        }
+      } catch (err) {
+        setErrorType("CONNECTION");
+      } finally {
+        setLoading(false);
+      }
+      return;
     }
 
     // --- VALIDASI TEXT ---
     if (mode === "text") {
-        if (!inputText.trim()) {
-            setErrorType("EMPTY_TEXT");
-            return;
+      if (!inputText.trim()) {
+        setErrorType("EMPTY_TEXT");
+        return;
+      }
+      setLoading(true);
+      try {
+        const res = await fetch("/api/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: inputText }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setResult(data);
+        } else {
+          setBackendErrorMsg(data.error);
+          setErrorType("BACKEND_ERROR");
         }
-        setLoading(true);
-        try {
-            const res = await fetch("/api/predict", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: inputText }),
-            });
-            const data = await res.json();
-            if (data.success) {
-                setResult(data);
-            } else {
-                setBackendErrorMsg(data.error);
-                setErrorType("BACKEND_ERROR");
-            }
-        } catch (err) {
-            setErrorType("CONNECTION");
-        } finally {
-            setLoading(false);
-        }
+      } catch (err) {
+        setErrorType("CONNECTION");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -174,7 +175,7 @@ export default function AnalysisPage() {
     if (e.key === "Enter" && !e.shiftKey) {
       const isMobile = window.innerWidth < 768;
       if (mode === "text" && isMobile) {
-        return; 
+        return;
       }
       e.preventDefault();
       handleAnalyze();
@@ -191,75 +192,75 @@ export default function AnalysisPage() {
 
   return (
     <div className="w-full pt-28 pb-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center font-sans">
-      
+
       <div className="w-full max-w-4xl mx-auto text-center space-y-4 animate-in fade-in zoom-in duration-500 z-10">
-        
+
         <div>
-            <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500 pb-2">
+          <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500 pb-2">
             {content.title}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 text-sm md:text-lg max-w-2xl mx-auto mt-2">
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 text-sm md:text-lg max-w-2xl mx-auto mt-2">
             {content.desc}
-            </p>
+          </p>
         </div>
 
         {/* --- TOMBOL SWITCH MODE (TEXT vs YOUTUBE) --- */}
         <div className="grid grid-cols-2 gap-3 mt-8 w-full max-w-[340px] mx-auto">
-            <button 
-              onClick={() => { setMode("text"); setResult(null); setErrorType(null); }}
-              className={`flex items-center justify-center gap-2 py-2.5 rounded-full font-bold text-sm transition-all border border-transparent
-                ${mode === "text" 
-                  ? "bg-orange-600 text-white shadow-lg shadow-orange-500/20" 
-                  : "bg-gray-100 dark:bg-white/5 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-white/10"}`}
-            >
-              <FileText size={16}/> {content.modeText}
-            </button>
-            <button 
-              onClick={() => { setMode("youtube"); setResult(null); setErrorType(null); }}
-              className={`flex items-center justify-center gap-2 py-2.5 rounded-full font-bold text-sm transition-all border border-transparent
-                ${mode === "youtube" 
-                  ? "bg-[#FF0000] text-white shadow-lg shadow-[#FF0000]/20" 
-                  : "bg-gray-100 dark:bg-white/5 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-white/10"}`}
-            >
-              <Youtube size={16}/> {content.modeYoutube}
-            </button>
+          <button
+            onClick={() => { setMode("text"); setResult(null); setErrorType(null); }}
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-full font-bold text-sm transition-all border border-transparent
+                ${mode === "text"
+                ? "bg-orange-600 text-white shadow-lg shadow-orange-500/20"
+                : "bg-gray-100 dark:bg-white/5 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-white/10"}`}
+          >
+            <FileText size={16} /> {content.modeText}
+          </button>
+          <button
+            onClick={() => { setMode("youtube"); setResult(null); setErrorType(null); }}
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-full font-bold text-sm transition-all border border-transparent
+                ${mode === "youtube"
+                ? "bg-[#FF0000] text-white shadow-lg shadow-[#FF0000]/20"
+                : "bg-gray-100 dark:bg-white/5 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-white/10"}`}
+          >
+            <Youtube size={16} /> {content.modeYoutube}
+          </button>
         </div>
 
-        <div className="liquid-glass p-1.5 shadow-2xl mt-6 max-w-3xl mx-auto w-full"> 
+        <div className="liquid-glass p-1.5 shadow-2xl mt-6 max-w-3xl mx-auto w-full">
           <div className="bg-white/50 dark:bg-black/20 rounded-xl p-4 backdrop-blur-sm">
-             
-             {/* AREA INPUT */}
-             <div className="min-h-[140px] flex flex-col justify-center">
-               {mode === "text" ? (
-                  <textarea
-                    value={inputText}
-                    onChange={(e) => { setInputText(e.target.value); setErrorType(null); }}
-                    onKeyDown={handleKeyDown}
-                    placeholder={content.placeholder}
-                    className="w-full bg-transparent outline-none text-base md:text-lg h-full resize-none placeholder:text-gray-400 dark:text-white text-gray-900"
-                    style={{ minHeight: '140px' }} 
-                  />
-               ) : (
-                  <div className="py-2 px-2 w-full">
-                    <div className="relative flex items-center">
-                      <div className="absolute left-4 text-gray-400 pointer-events-none">
-                        <Youtube size={20} />
-                      </div>
-                      <input
-                        type="text"
-                        value={youtubeUrl}
-                        onChange={(e) => { setYoutubeUrl(e.target.value); setErrorType(null); }}
-                        onKeyDown={handleKeyDown}
-                        placeholder={content.ytPlaceholder}
-                        className="w-full bg-white/50 dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl py-4 pl-12 pr-4 text-lg font-medium focus:border-[#FF0000] focus:ring-2 focus:ring-[#FF0000]/20 focus:outline-none transition-all text-gray-800 dark:text-white placeholder:text-gray-400"
-                      />
+
+            {/* AREA INPUT */}
+            <div className="min-h-[140px] flex flex-col justify-center">
+              {mode === "text" ? (
+                <textarea
+                  value={inputText}
+                  onChange={(e) => { setInputText(e.target.value); setErrorType(null); }}
+                  onKeyDown={handleKeyDown}
+                  placeholder={content.placeholder}
+                  className="w-full bg-transparent outline-none text-base md:text-lg h-full resize-none placeholder:text-gray-400 dark:text-white text-gray-900"
+                  style={{ minHeight: '140px' }}
+                />
+              ) : (
+                <div className="py-2 px-2 w-full">
+                  <div className="relative flex items-center">
+                    <div className="absolute left-4 text-gray-400 pointer-events-none">
+                      <Youtube size={20} />
                     </div>
-                    <p className="text-xs text-left mt-3 ml-1 text-gray-500 dark:text-gray-400 flex items-center gap-1 pl-1">
-                      <Lightbulb size={12} className="text-yellow-500"/> {content.ytTip}
-                    </p>
+                    <input
+                      type="text"
+                      value={youtubeUrl}
+                      onChange={(e) => { setYoutubeUrl(e.target.value); setErrorType(null); }}
+                      onKeyDown={handleKeyDown}
+                      placeholder={content.ytPlaceholder}
+                      className="w-full bg-white/50 dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl py-4 pl-12 pr-4 text-lg font-medium focus:border-[#FF0000] focus:ring-2 focus:ring-[#FF0000]/20 focus:outline-none transition-all text-gray-800 dark:text-white placeholder:text-gray-400"
+                    />
                   </div>
-               )}
-             </div>
+                  <p className="text-xs text-left mt-3 ml-1 text-gray-500 dark:text-gray-400 flex items-center gap-1 pl-1">
+                    <Lightbulb size={12} className="text-yellow-500" /> {content.ytTip}
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* ERROR MSG */}
             {currentErrorMsg && (
@@ -274,11 +275,13 @@ export default function AnalysisPage() {
                 onClick={handleAnalyze}
                 disabled={loading}
                 className={`flex items-center gap-2 text-white px-6 py-2 rounded-lg font-bold transition-all disabled:opacity-50 shadow-lg text-sm md:text-base
-                  ${mode === "youtube" 
-                    ? "bg-[#FF0000] hover:bg-red-700 hover:shadow-[#FF0000]/30" 
+                  ${mode === "youtube"
+                    ? "bg-[#FF0000] hover:bg-red-700 hover:shadow-[#FF0000]/30"
                     : "bg-orange-600 hover:bg-orange-700 hover:shadow-orange-500/30"}`}
               >
-                {loading ? content.btnLoading : (mode === "youtube" ? content.btnYoutube : content.btnAnalyze)} 
+                {loading
+                  ? (mode === "youtube" ? content.btnLoadingYoutube : content.btnLoadingText)
+                  : (mode === "youtube" ? content.btnYoutube : content.btnAnalyze)}
                 {!loading && <Search className="w-4 h-4" />}
               </button>
             </div>
@@ -287,68 +290,68 @@ export default function AnalysisPage() {
 
         {/* HASIL */}
         {result && (
-           <div className="w-full max-w-3xl mx-auto animate-in slide-in-from-bottom-10 mt-6 space-y-4">
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-               {/* MBTI */}
-               <div className="liquid-glass p-4 border-t-4 border-orange-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl flex flex-col h-full">
-                 <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-2">
-                   <BrainCircuit size={12}/> {content.resMBTI}
-                 </h3>
-                 <div className="flex-1 flex items-center justify-center">
-                    <div className="text-3xl font-black text-orange-600">{result.mbti_type}</div>
-                 </div>
-               </div>
-               {/* EMOTION */}
-               <div className="liquid-glass p-4 border-t-4 border-green-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl flex flex-col h-full">
-                 <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-2">
-                   <Smile size={12}/> {content.resSentiment}
-                 </h3>
-                 <div className="flex-1 flex items-center justify-center">
-                    <div className="text-xl font-bold capitalize text-green-600 dark:text-green-400 truncate px-2 text-center">
-                       {result.emotion ? (result.emotion[lang] || result.emotion.id || result.emotion) : result.sentiment}
-                    </div>
-                 </div>
-               </div>
-               {/* KEYWORDS */}
-               <div className="liquid-glass p-4 border-t-4 border-blue-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl h-full flex flex-col">
-                 <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-3">
-                   <Tag size={12}/> {content.resKeywords}
-                 </h3>
-                 <div className="flex flex-wrap gap-2 justify-center items-center w-full">
-                   {currentKeywords.slice(0, 3).map((k: string, i: number) => (
-                     <span key={i} className="bg-orange-100 dark:bg-orange-900/30 px-3 py-1 rounded-full text-xs font-bold text-orange-700 dark:text-orange-200 border border-orange-200 dark:border-orange-800/50 capitalize">
-                       {k}
-                     </span>
-                   ))}
-                 </div>
-               </div>
-             </div>
-
-             {/* PREVIEW CONTENT */}
-             {result.fetched_text && (
-                <div className="liquid-glass p-6 bg-white/40 dark:bg-black/20 backdrop-blur-sm rounded-xl text-left border border-gray-200 dark:border-white/5">
-                  <h3 className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2 text-gray-500">
-                    <Eye size={14}/> {content.resContent}
-                  </h3>
-                  <div className="bg-gray-50 dark:bg-black/40 p-4 rounded-lg max-h-60 overflow-y-auto text-sm text-gray-600 dark:text-gray-300 leading-relaxed border border-gray-100 dark:border-white/5 whitespace-pre-wrap font-mono">
-                    {result.fetched_text}
+          <div className="w-full max-w-3xl mx-auto animate-in slide-in-from-bottom-10 mt-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* MBTI */}
+              <div className="liquid-glass p-4 border-t-4 border-orange-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl flex flex-col h-full">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-2">
+                  <BrainCircuit size={12} /> {content.resMBTI}
+                </h3>
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-3xl font-black text-orange-600">{result.mbti_type}</div>
+                </div>
+              </div>
+              {/* EMOTION */}
+              <div className="liquid-glass p-4 border-t-4 border-green-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl flex flex-col h-full">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-2">
+                  <Smile size={12} /> {content.resSentiment}
+                </h3>
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-xl font-bold capitalize text-green-600 dark:text-green-400 truncate px-2 text-center">
+                    {result.emotion ? (result.emotion[lang] || result.emotion.id || result.emotion) : result.sentiment}
                   </div>
                 </div>
-             )}
-           </div>
+              </div>
+              {/* KEYWORDS */}
+              <div className="liquid-glass p-4 border-t-4 border-blue-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl h-full flex flex-col">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-3">
+                  <Tag size={12} /> {content.resKeywords}
+                </h3>
+                <div className="flex flex-wrap gap-2 justify-center items-center w-full">
+                  {currentKeywords.slice(0, 3).map((k: string, i: number) => (
+                    <span key={i} className="bg-orange-100 dark:bg-orange-900/30 px-3 py-1 rounded-full text-xs font-bold text-orange-700 dark:text-orange-200 border border-orange-200 dark:border-orange-800/50 capitalize">
+                      {k}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* PREVIEW CONTENT */}
+            {result.fetched_text && (
+              <div className="liquid-glass p-6 bg-white/40 dark:bg-black/20 backdrop-blur-sm rounded-xl text-left border border-gray-200 dark:border-white/5">
+                <h3 className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2 text-gray-500">
+                  <Eye size={14} /> {content.resContent}
+                </h3>
+                <div className="bg-gray-50 dark:bg-black/40 p-4 rounded-lg max-h-60 overflow-y-auto text-sm text-gray-600 dark:text-gray-300 leading-relaxed border border-gray-100 dark:border-white/5 whitespace-pre-wrap font-mono">
+                  {result.fetched_text}
+                </div>
+              </div>
+            )}
+          </div>
         )}
-        
+
         {/* GUIDES */}
         {!result && (
           <div className="mt-16 w-full max-w-3xl mx-auto animate-in slide-in-from-bottom-10 delay-200">
             <h3 className="text-lg font-bold text-center mb-6 text-gray-500 uppercase tracking-widest text-xs">
               {content.guideTitle}
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
               {content.guides.map((item, idx) => (
                 <div key={idx} className="group p-6 border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 rounded-xl hover:shadow-lg transition-all duration-300">
-                  
+
                   <div className="p-2.5 bg-orange-100 dark:bg-orange-500/20 w-fit rounded-lg mb-4 text-orange-600 dark:text-orange-400 group-hover:scale-110 transition-transform duration-300">
                     <item.icon className="w-5 h-5" />
                   </div>

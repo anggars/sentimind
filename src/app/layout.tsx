@@ -19,17 +19,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} min-h-screen bg-background text-foreground flex flex-col`}> 
+      <body className={`${inter.className} min-h-screen bg-background text-foreground flex flex-col`}>
         <Providers>
           <Navbar />
-          
+
           {/* Main content fills available space */}
-          <main className="container mx-auto px-4 md:px-8 flex-grow"> 
+          <main className="container mx-auto px-4 md:px-8 flex-grow">
             {children}
           </main>
 
           <Footer />
-          
+
         </Providers>
       </body>
     </html>
