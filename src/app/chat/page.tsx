@@ -311,10 +311,10 @@ export default function ChatPage() {
             </div>
 
             {/* STICKY Input Area */}
-            <div className="sticky bottom-0 left-0 w-full bg-white dark:bg-black border-t border-gray-100 dark:border-neutral-900 pb-6 pt-4 px-4 md:px-0 z-30">
+            <div className="sticky bottom-0 left-0 w-full bg-background pb-6 pt-4 px-4 md:px-0 z-30">
                 <div className="max-w-3xl mx-auto relative">
                     {/* Shadow gradient top for nice effect */}
-                    <div className="absolute -top-10 left-0 w-full h-10 bg-gradient-to-t from-white dark:from-black to-transparent pointer-events-none" />
+                    <div className="absolute -top-10 left-0 w-full h-10 bg-gradient-to-t from-background to-transparent pointer-events-none" />
 
                     <div className="relative flex items-center bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-sm rounded-3xl p-2 transition-all focus-within:ring-2 focus-within:ring-orange-500/20 focus-within:border-orange-500">
                         {/* Voice Button */}
@@ -347,7 +347,7 @@ export default function ChatPage() {
                             <Send size={18} />
                         </button>
                     </div>
-                    <p className="text-center text-[10px] md:text-xs text-gray-400 mt-2 opacity-70">
+                    <p className="text-center text-[10px] md:text-xs text-gray-400 mt-3 -mb-3 opacity-70">
                         {content.powerBy}
                     </p>
                 </div>

@@ -1,0 +1,16 @@
+# Ignore backend folder - deploy ke HF Spaces
+api/
+
+# Ignore Python files
+*.py
+*.pkl
+*.pyc
+__pycache__/
+
+# Ignore Docker files
+Dockerfile
+.dockerignore
+
+# Ignore training files
+train_*.py
+test_*.py
