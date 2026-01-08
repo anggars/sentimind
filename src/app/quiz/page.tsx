@@ -12,7 +12,7 @@ type Question = {
 };
 
 export default function QuizPage() {
-  const { lang } = useLanguage(); 
+  const { lang } = useLanguage();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -56,11 +56,12 @@ export default function QuizPage() {
       ]
     }
   };
-  
+
   const content = t[lang];
 
   useEffect(() => {
-    fetch("/api/quiz")
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+    fetch(`${apiUrl}/api/quiz`)
       .then((res) => res.json())
       .then((data) => {
         setQuestions(data.questions || []);
@@ -82,7 +83,8 @@ export default function QuizPage() {
   const submitAnswers = async (finalAnswers: Record<string, number>) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/quiz", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+      const res = await fetch(`${apiUrl}/api/quiz`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answers: finalAnswers }),
@@ -109,37 +111,37 @@ export default function QuizPage() {
     return (
       <div className="w-full pt-28 pb-12 flex flex-col justify-center items-center font-sans relative px-4">
         <div className="liquid-glass p-8 md:p-12 text-center animate-in zoom-in duration-500 bg-white/40 dark:bg-black/20 border border-white/20 max-w-2xl w-full rounded-3xl shadow-2xl">
-          
+
           <h2 className="text-sm font-bold opacity-60 uppercase tracking-widest text-gray-800 dark:text-gray-200 mb-4">
             {content.result}
           </h2>
 
           <div className={`p-6 rounded-2xl border-2 bg-white/50 dark:bg-black/40 backdrop-blur-md mb-8 ${data?.color || 'border-gray-500'}`}>
-             <div className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 mb-2">
-                {result}
-             </div>
-             <h3 className={`text-2xl font-bold mb-2 ${data?.textColor}`}>
-                {contentData?.name}
-             </h3>
-             <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base line-clamp-3">
-                {contentData?.desc}
-             </p>
+            <div className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 mb-2">
+              {result}
+            </div>
+            <h3 className={`text-2xl font-bold mb-2 ${data?.textColor}`}>
+              {contentData?.name}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base line-clamp-3">
+              {contentData?.desc}
+            </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-             <Link 
-               href={`/types/${result}`}
-               className="px-8 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-all shadow-lg hover:shadow-orange-500/30"
-             >
-               {lang === 'en' ? "Read Full Profile" : "Baca Profil Lengkap"}
-             </Link>
+            <Link
+              href={`/types/${result}`}
+              className="px-8 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-all shadow-lg hover:shadow-orange-500/30"
+            >
+              {lang === 'en' ? "Read Full Profile" : "Baca Profil Lengkap"}
+            </Link>
 
-             <button 
-                onClick={() => window.location.reload()} 
-                className="px-8 py-3 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/20 rounded-xl font-bold hover:bg-gray-100 dark:hover:bg-white/20 transition-all text-gray-900 dark:text-white"
-             >
-                {content.retry}
-             </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-8 py-3 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/20 rounded-xl font-bold hover:bg-gray-100 dark:hover:bg-white/20 transition-all text-gray-900 dark:text-white"
+            >
+              {content.retry}
+            </button>
           </div>
 
         </div>
@@ -154,7 +156,7 @@ export default function QuizPage() {
   return (
     <div className="w-full pt-28 pb-12 px-4 sm:px-6 lg:px-8 font-sans flex flex-col items-center">
       <div className="max-w-3xl w-full z-10">
-        
+
         {/* HEADER */}
         <div className="text-center mb-12 animate-in fade-in zoom-in duration-500">
           <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500 pb-2 mb-2">
@@ -164,11 +166,11 @@ export default function QuizPage() {
             {content.subtitle}
           </p>
         </div>
-        
+
         {/* CARD SOAL */}
         <div className="liquid-glass p-6 md:p-10 animate-in fade-in zoom-in duration-300 bg-white/50 dark:bg-black/30 backdrop-blur-md shadow-2xl border border-white/20 rounded-3xl">
-           
-           <div className="flex justify-between items-end mb-6 border-b border-gray-500/10 pb-4">
+
+          <div className="flex justify-between items-end mb-6 border-b border-gray-500/10 pb-4">
             <span className="text-xs font-bold uppercase tracking-widest opacity-50 text-gray-700 dark:text-gray-300">
               {content.questionLabel}
             </span>
@@ -180,7 +182,7 @@ export default function QuizPage() {
           <h2 className="text-xl md:text-3xl font-bold mb-12 text-center leading-snug min-h-[100px] flex items-center justify-center text-gray-900 dark:text-white">
             {currentQuestionText}
           </h2>
-          
+
           <div className="relative">
             <div className="hidden md:flex justify-between absolute -top-8 w-full text-xs font-bold opacity-60 px-2">
               <span className="text-red-500">{content.disagree}</span>
@@ -194,14 +196,14 @@ export default function QuizPage() {
                   onClick={() => handleAnswer(val)}
                   className={`
                     group relative rounded-full border-2 transition-all duration-300 flex items-center justify-center shadow-sm
-                    ${val === 0 
-                      ? 'w-10 h-10 md:w-12 md:h-12 border-gray-300 text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10' 
+                    ${val === 0
+                      ? 'w-10 h-10 md:w-12 md:h-12 border-gray-300 text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'
                       : 'w-12 h-12 md:w-16 md:h-16 hover:scale-110 active:scale-95'
                     }
-                    ${val < 0 
-                      ? 'border-red-400/50 text-red-500 hover:bg-red-500 hover:border-red-500 hover:text-white' 
-                      : val > 0 
-                        ? 'border-green-400/50 text-green-500 hover:bg-green-500 hover:border-green-500 hover:text-white' 
+                    ${val < 0
+                      ? 'border-red-400/50 text-red-500 hover:bg-red-500 hover:border-red-500 hover:text-white'
+                      : val > 0
+                        ? 'border-green-400/50 text-green-500 hover:bg-green-500 hover:border-green-500 hover:text-white'
                         : ''
                     }
                   `}
@@ -231,14 +233,14 @@ export default function QuizPage() {
 
         {/* INFO SECTION */}
         {!result && (
-           <div className="mt-12 flex flex-col md:flex-row justify-center gap-6 md:gap-12 opacity-60 text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-bottom-5 delay-200">
-              {content.infos.map((info, idx) => (
-                  <div key={idx} className="flex items-center gap-2 justify-center">
-                      <info.icon size={16} />
-                      <span>{info.text}</span>
-                  </div>
-              ))}
-           </div>
+          <div className="mt-12 flex flex-col md:flex-row justify-center gap-6 md:gap-12 opacity-60 text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-bottom-5 delay-200">
+            {content.infos.map((info, idx) => (
+              <div key={idx} className="flex items-center gap-2 justify-center">
+                <info.icon size={16} />
+                <span>{info.text}</span>
+              </div>
+            ))}
+          </div>
         )}
 
       </div>
