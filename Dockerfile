@@ -3,14 +3,19 @@
 
 FROM python:3.10-slim
 
+# Create non-root user (required by HF Spaces)
+RUN useradd -m -u 1000 user
+USER user
+ENV PATH="/home/user/.local/bin:$PATH"
+
 WORKDIR /app
 
 # Copy requirements dan install dependencies
-COPY api/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY --chown=user api/requirements.txt requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 # Copy folder api ke dalam container
-COPY api/ ./api/
+COPY --chown=user api/ ./api/
 
 # Expose port 7860 (default HF Spaces)
 EXPOSE 7860
