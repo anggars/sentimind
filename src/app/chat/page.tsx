@@ -19,7 +19,7 @@ interface Message {
 }
 
 // --- TYPEWRITER COMPONENT dengan Markdown Real-time ---
-const Typewriter = ({ text, speed = 10, onTyping }: { text: string; speed?: number; onTyping?: () => void }) => {
+const Typewriter = ({ text, speed = 10, onTyping, onComplete }: { text: string; speed?: number; onTyping?: () => void; onComplete?: () => void }) => {
     const [displayedText, setDisplayedText] = useState("");
     const [isTyping, setIsTyping] = useState(true);
 
@@ -36,11 +36,12 @@ const Typewriter = ({ text, speed = 10, onTyping }: { text: string; speed?: numb
             } else {
                 clearInterval(interval);
                 setIsTyping(false);
+                onComplete?.();
             }
         }, speed);
 
         return () => clearInterval(interval);
-    }, [text, speed, onTyping]);
+    }, [text, speed]);
 
     return (
         <div className="markdown-content">
@@ -82,43 +83,55 @@ export default function ChatPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isListening, setIsListening] = useState(false);
+    const [typedMessages, setTypedMessages] = useState<Set<string>>(new Set());
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
     const recognitionRef = useRef<any>(null);
 
+    // Only auto-scroll if user is already near the bottom
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+        const container = messagesContainerRef.current;
+        if (!container) return;
+
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
+        if (isNearBottom) {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+        }
     };
 
     useEffect(() => {
-        scrollToBottom();
+        // Force scroll on new messages
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }, [messages, isLoading]);
 
     // Initialize Speech Recognition
+    const accumulatedTranscriptRef = useRef<string>('');
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
             if (SpeechRecognition) {
                 const recognition = new SpeechRecognition();
-                // CONTINUOUS: TRUE -> Biar gak berhenti pas diem bentar (nunggu mikir)
                 recognition.continuous = true;
                 recognition.interimResults = true;
                 recognition.lang = lang === 'id' ? 'id-ID' : 'en-US';
 
                 recognition.onresult = (event: any) => {
-                    let currentTranscript = '';
-                    for (let i = event.resultIndex; i < event.results.length; ++i) {
-                        currentTranscript += event.results[i][0].transcript;
+                    let finalTranscript = '';
+                    let interimTranscript = '';
+
+                    for (let i = 0; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) {
+                            finalTranscript += event.results[i][0].transcript + ' ';
+                        } else {
+                            interimTranscript += event.results[i][0].transcript;
+                        }
                     }
-                    // Kita update input value realtime, tapi user harus STOP manual biar UX nya jelas
-                    // Atau bisa juga kita append ke existing value
-                    if (currentTranscript) {
-                        // Strategi: Karena continuous, kita ambil yang paling baru
-                        // Tapi logic update state di React agak tricky sama continuous speech
-                        // Simplifikasi: Kita ambil transcript terakhir yang final atau interim
-                        // Note: Ini versi simple biar gak ribet state merging-nya
-                        setInputValue(currentTranscript);
-                    }
+
+                    // Gabungkan final + interim untuk display
+                    setInputValue(finalTranscript + interimTranscript);
+                    accumulatedTranscriptRef.current = finalTranscript;
                 };
 
                 recognition.onerror = (event: any) => {
@@ -127,9 +140,6 @@ export default function ChatPage() {
                         setIsListening(false);
                     }
                 };
-
-                // Jangan auto setsListening(false) di onend, biar user yg kontrol (toggle)
-                // Kecuali error berat
 
                 recognitionRef.current = recognition;
             }
@@ -276,7 +286,7 @@ export default function ChatPage() {
                 )}
 
                 {/* Chat Messages */}
-                <div className="space-y-6 flex-1 mb-8">
+                <div ref={messagesContainerRef} className="space-y-6 flex-1 mb-8">
                     {messages.map((msg) => (
                         <div
                             key={msg.id}
@@ -303,7 +313,20 @@ export default function ChatPage() {
                                     : "text-gray-800 dark:text-gray-200 px-2 py-1 prose dark:prose-invert max-w-none"
                             )}>
                                 {msg.role === "bot" ? (
-                                    <Typewriter text={msg.content} speed={15} onTyping={scrollToBottom} />
+                                    typedMessages.has(msg.id) ? (
+                                        <div className="markdown-content">
+                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                {msg.content}
+                                            </ReactMarkdown>
+                                        </div>
+                                    ) : (
+                                        <Typewriter
+                                            text={msg.content}
+                                            speed={15}
+                                            onTyping={scrollToBottom}
+                                            onComplete={() => setTypedMessages(prev => new Set([...prev, msg.id]))}
+                                        />
+                                    )
                                 ) : (
                                     msg.content
                                 )}
@@ -341,7 +364,7 @@ export default function ChatPage() {
                     {/* Shadow gradient top for nice effect */}
                     <div className="absolute -top-10 left-0 w-full h-10 bg-gradient-to-t from-background to-transparent pointer-events-none" />
 
-                    <div className="relative flex items-center bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-sm rounded-3xl p-2 transition-all focus-within:ring-2 focus-within:ring-orange-500/20 focus-within:border-orange-500">
+                    <div className="relative flex items-center bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-sm rounded-3xl p-2 transition-all focus-within:border-orange-500">
                         {/* Voice Button */}
                         <button
                             onClick={toggleListening}
@@ -362,7 +385,7 @@ export default function ChatPage() {
                             onKeyDown={(e) => e.key === "Enter" && handleSendMessage(inputValue)}
                             placeholder={content.placeholder}
                             disabled={isLoading}
-                            className="w-full bg-transparent border-none focus:ring-0 rounded-full px-2 py-3 text-base text-gray-800 dark:text-gray-200 placeholder:text-gray-400"
+                            className="w-full bg-transparent border-none outline-none focus:ring-0 focus:outline-none rounded-full px-2 py-3 text-base text-gray-800 dark:text-gray-200 placeholder:text-gray-400"
                         />
                         <button
                             onClick={() => handleSendMessage(inputValue)}
