@@ -33,9 +33,9 @@ jobs:
           git rm --ignore-unmatch api/data/model_emotion.pkl
 
           # 4. Download Model Asli dari HF Space
-          echo "Downloading models from Hugging Face..."
-          curl -L -H "Authorization: Bearer $HF_TOKEN" https://huggingface.co/spaces/anggars/sentimind-api/resolve/main/api/data/model_mbti.pkl -o api/data/model_mbti.pkl
-          curl -L -H "Authorization: Bearer $HF_TOKEN" https://huggingface.co/spaces/anggars/sentimind-api/resolve/main/api/data/model_emotion.pkl -o api/data/model_emotion.pkl
+          echo "Fetching models from Hugging Face via Git..."
+          git fetch space main
+          git checkout space/main -- api/data/model_mbti.pkl api/data/model_emotion.pkl
 
           # 5. Pastikan file model ke-track sebagai LFS
           git lfs track "api/data/*.pkl"
