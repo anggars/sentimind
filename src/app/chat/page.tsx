@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/app/providers";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Fallback utility
 function classNames(...classes: (string | undefined | null | false)[]) {
@@ -28,8 +29,8 @@ const markdownComponents = {
     th: ({ children }: any) => <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-bold">{children}</th>,
     td: ({ children }: any) => <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">{children}</td>,
     // Style untuk list
-    ul: ({ children }: any) => <ul className="list-disc list-inside my-2 space-y-1">{children}</ul>,
-    ol: ({ children }: any) => <ol className="list-decimal list-inside my-2 space-y-1">{children}</ol>,
+    ul: ({ children }: any) => <ul className="list-disc list-outside pl-5 my-2 space-y-1">{children}</ul>,
+    ol: ({ children }: any) => <ol className="list-decimal list-outside pl-5 my-2 space-y-1">{children}</ol>,
     // Code block styling
     code: ({ node, inline, className, children, ...props }: any) => {
         const match = /language-(\w+)/.exec(className || "");
@@ -250,7 +251,7 @@ export default function ChatPage() {
             emptyState: "Start a conversation..."
         },
         id: {
-            title: "Sentimind AI Chat",
+            title: "Sentimind Chat",
             desc: "Ngobrol santai soal MBTI, psikologi, dan kesehatan mental.",
             placeholder: "Ketik atau ngomong langsung...",
             thinking: "Bentar bre, mikir dulu...",
@@ -268,95 +269,138 @@ export default function ChatPage() {
     const content = t[lang] || t.en;
 
     return (
-        <div className="w-full flex flex-col pt-20 font-sans min-h-screen">
+        <div className="w-full flex flex-col pt-28 md:pt-32 font-sans min-h-screen justify-start">
 
             {/* Main Chat Content */}
             <div className="flex-1 w-full max-w-3xl mx-auto px-4 md:px-0 flex flex-col">
 
                 {/* Header (Only show if no messages) */}
-                {messages.length === 0 && (
-                    <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in duration-500 py-10 min-h-[40vh]">
-                        <div className="p-2 bg-orange-100 dark:bg-orange-500/10 rounded-full mb-2">
-                            <Sparkles className="text-orange-600 dark:text-orange-400 w-6 h-6" />
-                        </div>
-                        <div>
-                            <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">
-                                {content.title}
-                            </h1>
-                            <p className="text-gray-500 dark:text-gray-400 mt-3 text-lg">
-                                {content.desc}
-                            </p>
-                        </div>
+                <AnimatePresence>
+                    {messages.length === 0 && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.5 }}
+                            className="flex flex-col items-center text-center space-y-6 py-10"
+                        >
+                            <motion.div 
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
+                                className="p-2 bg-orange-100 dark:bg-orange-500/10 rounded-full mb-2"
+                            >
+                                <Sparkles className="text-orange-600 dark:text-orange-400 w-6 h-6" />
+                            </motion.div>
+                            <div>
+                                <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500 leading-[1.1] pb-2">
+                                    {content.title}
+                                </h1>
+                                <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">
+                                    {content.desc}
+                                </p>
+                            </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl mt-8">
-                            {content.suggestions.map((s, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => handleSendMessage(s)}
-                                    className="p-4 text-left text-sm bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 hover:bg-orange-50 dark:hover:bg-neutral-800 hover:border-orange-300 dark:hover:border-orange-700/50 rounded-2xl transition-all text-gray-600 dark:text-gray-300 shadow-sm"
-                                >
-                                    "{s}"
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                            <motion.div 
+                                className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl mt-12"
+                                initial="hidden"
+                                animate="visible"
+                                variants={{
+                                    hidden: { opacity: 0 },
+                                    visible: {
+                                        opacity: 1,
+                                        transition: {
+                                            staggerChildren: 0.1
+                                        }
+                                    }
+                                }}
+                            >
+                                {content.suggestions.map((s, i) => (
+                                    <motion.button
+                                        key={i}
+                                        variants={{
+                                            hidden: { opacity: 0, y: 20 },
+                                            visible: { opacity: 1, y: 0 }
+                                        }}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={() => handleSendMessage(s)}
+                                        className="p-4 text-left text-sm bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 hover:bg-orange-50 dark:hover:bg-neutral-800 hover:border-orange-300 dark:hover:border-orange-700/50 rounded-2xl transition-colors text-gray-600 dark:text-gray-300 shadow-sm"
+                                    >
+                                        "{s}"
+                                    </motion.button>
+                                ))}
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Chat Messages */}
                 <div ref={messagesContainerRef} className="space-y-6 flex-1 mb-8">
-                    {messages.map((msg) => (
-                        <div
-                            key={msg.id}
-                            className={classNames(
-                                "flex gap-4 md:gap-6 animate-in slide-in-from-bottom-2 duration-300",
-                                msg.role === "user" ? "flex-row-reverse" : "flex-row"
-                            )}
-                        >
-                            {/* Avatar */}
-                            <div className={classNames(
-                                "w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm mt-1",
-                                msg.role === "user"
-                                    ? "bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200"
-                                    : "bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400"
-                            )}>
-                                {msg.role === "user" ? <User size={18} /> : <Bot size={20} />}
-                            </div>
-
-                            {/* Content */}
-                            <div className={classNames(
-                                "max-w-[85%] md:max-w-[80%] text-[15px] md:text-base leading-7",
-                                msg.role === "user"
-                                    ? "bg-orange-600 text-white px-5 py-3 rounded-2xl rounded-tr-sm shadow-md"
-                                    : "text-gray-800 dark:text-gray-200 px-2 py-1 prose dark:prose-invert max-w-none"
-                            )}>
-                                {msg.role === "bot" ? (
-                                    typedMessages.has(msg.id) ? (
-                                        <div className="markdown-content">
-                                            <ReactMarkdown
-                                                remarkPlugins={[remarkGfm]}
-                                                components={markdownComponents}
-                                            >
-                                                {msg.content}
-                                            </ReactMarkdown>
-                                        </div>
-                                    ) : (
-                                        <Typewriter
-                                            text={msg.content}
-                                            speed={15}
-                                            onTyping={() => scrollToBottom("auto")}
-                                            onComplete={() => setTypedMessages(prev => new Set([...prev, msg.id]))}
-                                        />
-                                    )
-                                ) : (
-                                    msg.content
+                    <AnimatePresence mode="popLayout">
+                        {messages.map((msg) => (
+                            <motion.div
+                                key={msg.id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9 }}
+                                transition={{ duration: 0.3 }}
+                                className={classNames(
+                                    "flex gap-4 md:gap-6",
+                                    msg.role === "user" ? "flex-row-reverse" : "flex-row"
                                 )}
-                            </div>
-                        </div>
-                    ))}
+                            >
+                                {/* Avatar */}
+                                <div className={classNames(
+                                    "w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm mt-1",
+                                    msg.role === "user"
+                                        ? "bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200"
+                                        : "bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400"
+                                )}>
+                                    {msg.role === "user" ? <User size={18} /> : <Bot size={20} />}
+                                </div>
+
+                                {/* Content */}
+                                <div className={classNames(
+                                    "max-w-[85%] md:max-w-[80%] text-[15px] md:text-base leading-7",
+                                    msg.role === "user"
+                                        ? "bg-orange-600 text-white px-5 py-3 rounded-2xl rounded-tr-sm shadow-md"
+                                        : "text-gray-800 dark:text-gray-200 px-2 py-1 prose dark:prose-invert max-w-none"
+                                )}>
+                                    {msg.role === "bot" ? (
+                                        typedMessages.has(msg.id) ? (
+                                            <div className="markdown-content">
+                                                <ReactMarkdown
+                                                    remarkPlugins={[remarkGfm]}
+                                                    components={markdownComponents}
+                                                >
+                                                    {msg.content}
+                                                </ReactMarkdown>
+                                            </div>
+                                        ) : (
+                                            <Typewriter
+                                                text={msg.content}
+                                                speed={15}
+                                                onTyping={() => scrollToBottom("auto")}
+                                                onComplete={() => setTypedMessages(prev => new Set([...prev, msg.id]))}
+                                            />
+                                        )
+                                    ) : (
+                                        msg.content
+                                    )}
+                                </div>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
 
                     {/* Loading State */}
                     {isLoading && (
-                        <div className="flex gap-4 md:gap-6 animate-pulse">
+                        <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex gap-4 md:gap-6"
+                        >
                             <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0 mt-1">
                                 <Bot size={20} />
                             </div>
@@ -366,13 +410,17 @@ export default function ChatPage() {
                                     {content.thinking}
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     )}
 
                     {error && (
-                        <div className="p-4 bg-red-50 text-red-600 border border-red-200 rounded-xl text-center">
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="p-4 bg-red-50 text-red-600 border border-red-200 rounded-xl text-center"
+                        >
                             <p>{error}</p>
-                        </div>
+                        </motion.div>
                     )}
                     <div ref={messagesEndRef} />
                 </div>
@@ -384,7 +432,12 @@ export default function ChatPage() {
                     {/* Shadow gradient top for nice effect */}
                     <div className="absolute -top-10 left-0 w-full h-10 bg-gradient-to-t from-background to-transparent pointer-events-none" />
 
-                    <div className="relative flex items-center bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-sm rounded-3xl p-2 transition-all focus-within:border-orange-500">
+                    <motion.div 
+                        initial={{ y: 50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.5, type: "spring" }}
+                        className="relative flex items-center bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-sm rounded-3xl p-2 transition-all focus-within:border-orange-500"
+                    >
                         {/* Voice Button */}
                         <button
                             onClick={toggleListening}
@@ -414,7 +467,7 @@ export default function ChatPage() {
                         >
                             <Send size={18} />
                         </button>
-                    </div>
+                    </motion.div>
                     <p className="text-center text-[10px] md:text-xs text-gray-400 mt-3 -mb-3 opacity-70">
                         {content.powerBy}
                     </p>

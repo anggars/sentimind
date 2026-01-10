@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { Sparkles, BrainCircuit, Search, BookOpen } from "lucide-react"; 
 import { useLanguage } from "@/app/providers";
-import { Button } from "@/components/ui/button"; // Pastiin ini keimport
+import { Button } from "@/components/ui/button";
+import { motion, Variants } from "framer-motion";
 
 export default function Home() {
   const { lang } = useLanguage();
@@ -40,28 +41,53 @@ export default function Home() {
   const content = t[lang];
   const icons = [BrainCircuit, Sparkles, Search];
 
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.15,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants: Variants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { type: "spring", stiffness: 100 }
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center justify-start pt-28 md:pt-32 font-sans gap-8 w-full min-h-screen">
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="flex flex-col items-center justify-start pt-28 md:pt-32 font-sans gap-8 w-full min-h-screen"
+    >
       
       <div className="flex flex-col items-center justify-center text-center gap-4 relative w-full px-4 max-w-4xl mx-auto">
         
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50/50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 text-xs font-medium border border-orange-200 dark:border-orange-800 animate-in fade-in zoom-in duration-700">
+        <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50/50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 text-xs font-medium border border-orange-200 dark:border-orange-800">
           <Sparkles className="w-3 h-3" />
           <span>{content.badge}</span>
-        </div>
+        </motion.div>
 
         {/* Title */}
-        <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-gray-900 dark:text-white animate-in slide-in-from-bottom-5 duration-700 leading-[1.1] pb-2">
+        <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-black tracking-tighter text-gray-900 dark:text-white leading-[1.1] pb-2">
           {content.titleLine1} <span className="text-transparent bg-clip-text bg-gradient-to-br from-orange-500 to-amber-600">{content.titleLine2}</span>
-        </h1>
+        </motion.h1>
 
-        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl animate-in slide-in-from-bottom-10 duration-700 delay-100 leading-relaxed">
+        <motion.p variants={itemVariants} className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">
           {content.desc}
-        </p>
+        </motion.p>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8 w-full animate-in slide-in-from-bottom-10 duration-700 delay-200">
+        <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8 w-full">
           
           <Button asChild size="lg" className="w-full sm:w-auto h-12 px-8 text-base font-semibold rounded-lg shadow-sm cursor-pointer bg-orange-600 hover:bg-orange-700 text-white border-transparent">
              <Link href="/analyzer">
@@ -77,25 +103,29 @@ export default function Home() {
              </Link>
           </Button>
 
-        </div>
+        </motion.div>
 
-        {/* Features Grid - Tetap Sama */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-20 pb-20 w-full text-left">
+        {/* Features Grid */}
+        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-20 pb-20 w-full text-left">
           {content.features.map((item, i) => {
             const Icon = icons[i];
             return (
-              <div key={i} className="group p-6 border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 rounded-xl hover:shadow-lg transition-all duration-300">
+              <motion.div 
+                key={i} 
+                whileHover={{ y: -5 }}
+                className="group p-6 border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 rounded-xl hover:shadow-lg transition-all duration-300"
+              >
                 <div className="p-2.5 bg-orange-100 dark:bg-orange-500/20 w-fit rounded-lg mb-4 text-orange-600 dark:text-orange-400 group-hover:scale-110 transition-transform duration-300">
                   <Icon className="w-5 h-5" />
                 </div>
                 <h3 className="text-sm font-bold mb-2 text-gray-900 dark:text-white tracking-tight">{item.title}</h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{item.desc}</p>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
 
       </div>
-    </div>
+    </motion.div>
   );
 }

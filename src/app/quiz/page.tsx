@@ -1,9 +1,11 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/app/providers";
 import Link from "next/link";
 import { mbtiDatabase } from "@/data/mbti";
 import { CheckCircle2, Clock, ShieldCheck } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 type Question = {
   id: number;
@@ -37,7 +39,6 @@ export default function QuizPage() {
         { icon: ShieldCheck, text: "No right or wrong answers." }
       ]
     },
-    // REVISI: Indo Gaul (Jaksel Lite)
     id: {
       loading: "Lagi nyiapin soal...",
       title: "Kuis Kepribadian",
@@ -110,16 +111,26 @@ export default function QuizPage() {
 
     return (
       <div className="w-full pt-28 pb-12 flex flex-col justify-center items-center font-sans relative px-4">
-        <div className="liquid-glass p-8 md:p-12 text-center animate-in zoom-in duration-500 bg-white/40 dark:bg-black/20 border border-white/20 max-w-2xl w-full rounded-3xl shadow-2xl">
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", duration: 0.6 }}
+          className="liquid-glass p-8 md:p-12 text-center bg-white/40 dark:bg-black/20 border border-white/20 max-w-2xl w-full rounded-3xl shadow-2xl"
+        >
 
           <h2 className="text-sm font-bold opacity-60 uppercase tracking-widest text-gray-800 dark:text-gray-200 mb-4">
             {content.result}
           </h2>
 
           <div className={`p-6 rounded-2xl border-2 bg-white/50 dark:bg-black/40 backdrop-blur-md mb-8 ${data?.color || 'border-gray-500'}`}>
-            <div className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 mb-2">
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.3, type: "spring" }}
+              className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 mb-2"
+            >
               {result}
-            </div>
+            </motion.div>
             <h3 className={`text-2xl font-bold mb-2 ${data?.textColor}`}>
               {contentData?.name}
             </h3>
@@ -144,7 +155,7 @@ export default function QuizPage() {
             </button>
           </div>
 
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -158,89 +169,108 @@ export default function QuizPage() {
       <div className="max-w-3xl w-full z-10">
 
         {/* HEADER */}
-        <div className="text-center mb-12 animate-in fade-in zoom-in duration-500">
+        <motion.div 
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="text-center mb-12"
+        >
           <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500 pb-2 mb-2">
             {content.title}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm md:text-lg max-w-2xl mx-auto">
             {content.subtitle}
           </p>
-        </div>
+        </motion.div>
 
         {/* CARD SOAL */}
-        <div className="liquid-glass p-6 md:p-10 animate-in fade-in zoom-in duration-300 bg-white/50 dark:bg-black/30 backdrop-blur-md shadow-2xl border border-white/20 rounded-3xl">
-
-          <div className="flex justify-between items-end mb-6 border-b border-gray-500/10 pb-4">
-            <span className="text-xs font-bold uppercase tracking-widest opacity-50 text-gray-700 dark:text-gray-300">
-              {content.questionLabel}
-            </span>
-            <span className="text-2xl font-black text-orange-600">
-              {step + 1} <span className="text-sm font-medium text-gray-400">/ {questions.length}</span>
-            </span>
-          </div>
-
-          <h2 className="text-xl md:text-3xl font-bold mb-12 text-center leading-snug min-h-[100px] flex items-center justify-center text-gray-900 dark:text-white">
-            {currentQuestionText}
-          </h2>
-
-          <div className="relative">
-            <div className="hidden md:flex justify-between absolute -top-8 w-full text-xs font-bold opacity-60 px-2">
-              <span className="text-red-500">{content.disagree}</span>
-              <span className="text-green-500">{content.agree}</span>
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={step}
+            initial={{ x: 50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -50, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="liquid-glass p-6 md:p-10 bg-white/50 dark:bg-black/30 backdrop-blur-md shadow-2xl border border-white/20 rounded-3xl"
+          >
+            <div className="flex justify-between items-end mb-6 border-b border-gray-500/10 pb-4">
+              <span className="text-xs font-bold uppercase tracking-widest opacity-50 text-gray-700 dark:text-gray-300">
+                {content.questionLabel}
+              </span>
+              <span className="text-2xl font-black text-orange-600">
+                {step + 1} <span className="text-sm font-medium text-gray-400">/ {questions.length}</span>
+              </span>
             </div>
 
-            <div className="flex justify-between items-center gap-2 md:gap-4">
-              {[-3, -2, -1, 0, 1, 2, 3].map((val) => (
-                <button
-                  key={val}
-                  onClick={() => handleAnswer(val)}
-                  className={`
-                    group relative rounded-full border-2 transition-all duration-300 flex items-center justify-center shadow-sm
-                    ${val === 0
-                      ? 'w-10 h-10 md:w-12 md:h-12 border-gray-300 text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'
-                      : 'w-12 h-12 md:w-16 md:h-16 hover:scale-110 active:scale-95'
-                    }
-                    ${val < 0
-                      ? 'border-red-400/50 text-red-500 hover:bg-red-500 hover:border-red-500 hover:text-white'
-                      : val > 0
-                        ? 'border-green-400/50 text-green-500 hover:bg-green-500 hover:border-green-500 hover:text-white'
-                        : ''
-                    }
-                  `}
-                  title={`${val}`}
-                >
-                  <span className={`
-                    absolute rounded-full transition-all duration-300
-                    ${Math.abs(val) === 3 ? 'w-3 h-3 md:w-4 md:h-4' : ''}
-                    ${Math.abs(val) === 2 ? 'w-2.5 h-2.5 md:w-3 md:h-3' : ''}
-                    ${Math.abs(val) === 1 ? 'w-2 h-2 md:w-2 md:h-2' : ''}
-                    ${val === 0 ? 'w-1.5 h-1.5 bg-gray-400' : 'bg-current'}
-                    group-hover:bg-white
-                  `}></span>
-                  <span className="md:hidden absolute -bottom-6 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity text-gray-500">
-                    {val === -3 ? 'Sgt Tdk' : val === 3 ? 'Sgt Iya' : val}
-                  </span>
-                </button>
-              ))}
-            </div>
+            <h2 className="text-xl md:text-3xl font-bold mb-12 text-center leading-snug min-h-[100px] flex items-center justify-center text-gray-900 dark:text-white">
+              {currentQuestionText}
+            </h2>
 
-            <div className="flex justify-between mt-6 text-[10px] font-bold opacity-60 uppercase md:hidden tracking-wider">
-              <span className="text-red-500">{content.disagree}</span>
-              <span className="text-green-500">{content.agree}</span>
+            <div className="relative">
+              <div className="hidden md:flex justify-between absolute -top-8 w-full text-xs font-bold opacity-60 px-2">
+                <span className="text-red-500">{content.disagree}</span>
+                <span className="text-green-500">{content.agree}</span>
+              </div>
+
+              <div className="flex justify-between items-center gap-2 md:gap-4">
+                {[-3, -2, -1, 0, 1, 2, 3].map((val) => (
+                  <motion.button
+                    key={val}
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => handleAnswer(val)}
+                    className={`
+                      group relative rounded-full border-2 transition-all duration-300 flex items-center justify-center shadow-sm
+                      ${val === 0
+                        ? 'w-10 h-10 md:w-12 md:h-12 border-gray-300 text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'
+                        : 'w-12 h-12 md:w-16 md:h-16'
+                      }
+                      ${val < 0
+                        ? 'border-red-400/50 text-red-500 hover:bg-red-500 hover:border-red-500 hover:text-white'
+                        : val > 0
+                          ? 'border-green-400/50 text-green-500 hover:bg-green-500 hover:border-green-500 hover:text-white'
+                          : ''
+                      }
+                    `}
+                    title={`${val}`}
+                  >
+                    <span className={`
+                      absolute rounded-full transition-all duration-300
+                      ${Math.abs(val) === 3 ? 'w-3 h-3 md:w-4 md:h-4' : ''}
+                      ${Math.abs(val) === 2 ? 'w-2.5 h-2.5 md:w-3 md:h-3' : ''}
+                      ${Math.abs(val) === 1 ? 'w-2 h-2 md:w-2 md:h-2' : ''}
+                      ${val === 0 ? 'w-1.5 h-1.5 bg-gray-400' : 'bg-current'}
+                      group-hover:bg-white
+                    `}></span>
+                    <span className="md:hidden absolute -bottom-6 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity text-gray-500">
+                      {val === -3 ? 'Sgt Tdk' : val === 3 ? 'Sgt Iya' : val}
+                    </span>
+                  </motion.button>
+                ))}
+              </div>
+
+              <div className="flex justify-between mt-6 text-[10px] font-bold opacity-60 uppercase md:hidden tracking-wider">
+                <span className="text-red-500">{content.disagree}</span>
+                <span className="text-green-500">{content.agree}</span>
+              </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </AnimatePresence>
 
         {/* INFO SECTION */}
         {!result && (
-          <div className="mt-12 flex flex-col md:flex-row justify-center gap-6 md:gap-12 opacity-60 text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-bottom-5 delay-200">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.6 }}
+            transition={{ delay: 0.5 }}
+            className="mt-12 flex flex-col md:flex-row justify-center gap-6 md:gap-12 text-sm text-gray-600 dark:text-gray-400"
+          >
             {content.infos.map((info, idx) => (
               <div key={idx} className="flex items-center gap-2 justify-center">
                 <info.icon size={16} />
                 <span>{info.text}</span>
               </div>
             ))}
-          </div>
+          </motion.div>
         )}
 
       </div>
