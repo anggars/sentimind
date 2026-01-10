@@ -18,8 +18,16 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
+          # 1. Install LFS
           git lfs install
+          
+          # 2. DOWNLOAD PAKSA file model dari GitHub ke Runner ini
+          git lfs pull
+          
+          # 3. Setup User
           git config --global user.email "anggariantosudrajat@gmail.com"
           git config --global user.name "anggars"
+          
+          # 4. Tambah Remote & Push
           git remote add space https://anggars:$HF_TOKEN@huggingface.co/spaces/anggars/sentimind-api
           git push --force space main
