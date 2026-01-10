@@ -21,11 +21,16 @@ jobs:
       - name: Install Hugging Face Hub CLI
         run: pip install "huggingface_hub[cli]"
 
+      - name: Add Python Bin to PATH
+        run: |
+          echo "$(python -c 'import sys; print(sys.prefix)')/bin" >> $GITHUB_PATH
+          echo "Added python bin to PATH"
+
       - name: Sync to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          python -m huggingface_hub.cli upload anggars/sentimind-api . \
+          huggingface-cli upload anggars/sentimind-api . \
             --repo-type space \
             --exclude ".git/*" ".github/*" "**/*.pkl" \
             --commit-message "Sync from GitHub Actions: ${{ github.sha }}"
