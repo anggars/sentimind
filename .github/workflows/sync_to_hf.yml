@@ -41,7 +41,8 @@ jobs:
           git add .gitattributes
 
           # 6. Masukkan model (Force add untuk memastikan LFS filter jalan)
-          git add api/data/*.pkl
+          ls -lah api/data/
+          git add -f api/data/*.pkl
 
           # 7. Commit
           git commit --amend --no-edit
