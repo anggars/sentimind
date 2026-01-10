@@ -20,16 +20,13 @@ jobs:
         run: |
           # 1. Setup User & LFS
           git config --global user.email "anggariantosudrajat@gmail.com"
-          git config --global user.name "Angga Rianto Sudrajat"
+          git config --global user.name "anggars"
           git lfs install
           
           # 2. Add Remote Hugging Face
           git remote add space https://anggars:$HF_TOKEN@huggingface.co/spaces/anggars/sentimind-api
           
-          # 3. TRICK: Download Model Asli dari HF Space
-          # Kita ambil file model yang udah ada di HF dan masukin ke folder commit ini
-          # Jadi pas di-push, modelnya tetep ada (gak kehapus)
-          
+          # 3. Download Model Asli dari HF Space
           echo "Downloading models from Hugging Face..."
           curl -L -H "Authorization: Bearer $HF_TOKEN" https://huggingface.co/spaces/anggars/sentimind-api/resolve/main/api/data/model_mbti.pkl -o api/data/model_mbti.pkl
           curl -L -H "Authorization: Bearer $HF_TOKEN" https://huggingface.co/spaces/anggars/sentimind-api/resolve/main/api/data/model_emotion.pkl -o api/data/model_emotion.pkl
@@ -38,11 +35,11 @@ jobs:
           git lfs track "api/data/*.pkl"
           git add .gitattributes
           
-          # 5. Masukkan model yang barusan didownload ke dalam antrian commit
-          git add api/data/*.pkl
+          # 5. Masukkan model (PAKSA pake -f karena sebelumnya di-ignore)
+          git add -f api/data/*.pkl
           
-          # 6. "Amend" (Selipkan) model ini ke commit terakhir dari GitHub
+          # 6. "Amend" (Selipkan) model ini ke commit terakhir
           git commit --amend --no-edit
           
-          # 7. Push Force (Aman karena modelnya udah kita bawa)
+          # 7. Push Force
           git push --force space main
