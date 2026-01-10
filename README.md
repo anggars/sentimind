@@ -1,5 +1,5 @@
 ---
-title: Sentimind Api
+title: Sentimind API
 emoji: 🧠
 colorFrom: blue
 colorTo: indigo

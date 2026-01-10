@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
 from .core.nlp_handler import NLPHandler
 import os
@@ -65,6 +66,24 @@ def health_check():
         "api_key_detected": has_key 
     }
 
+@app.get("/", response_class=HTMLResponse)
+def read_root():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Sentimind API</title>
+        <style>
+            body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+            iframe { width: 100%; height: 100%; border: none; }
+        </style>
+    </head>
+    <body>
+        <iframe src="https://sentimind.vercel.app"></iframe>
+    </body>
+    </html>
+    """
+
 # --- ROUTE YOUTUBE BARU ---
 @app.get("/api/youtube/{video_id}") 
 def analyze_youtube_video(video_id: str):
@@ -87,6 +106,7 @@ def analyze_youtube_video(video_id: str):
             "mbti_type": result["mbti"],
             "emotion": result["emotion"],
             "keywords": result["keywords"],
+            "reasoning": result["reasoning"],
             "video": data.get("video"),
             "comments": data.get("comments", []),
             "fetched_text": text_for_analysis
@@ -99,5 +119,6 @@ def analyze_youtube_video(video_id: str):
         "mbti_type": result["mbti"],
         "emotion": result["emotion"],
         "keywords": result["keywords"],
+        "reasoning": result["reasoning"],
         "fetched_text": data
     }

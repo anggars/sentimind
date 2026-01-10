@@ -21,5 +21,6 @@ def predict_endpoint(input_data: UserInput):
         "success": True,
         "mbti_type": result["mbti"],
         "emotion": result["emotion"],
-        "keywords": result["keywords"]
+        "keywords": result["keywords"],
+        "reasoning": result["reasoning"]
     }

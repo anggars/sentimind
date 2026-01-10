@@ -28,27 +28,61 @@ EMOTION_TRANSLATIONS = {
     'neutral': 'Netral'
 }
 
+
+MBTI_EXPLANATIONS = {
+    'ISTJ': {'en': "The Logistician. Practical and fact-minded individuals, whose reliability cannot be doubted.", 
+             'id': "Si Organisator. Lo orangnya logis, praktis, dan bisa diandelin banget. Anti ribet-ribet club."},
+    'ISFJ': {'en': "The Defender. Very dedicated and warm protectors, always ready to defend their loved ones.", 
+             'id': "Si Pelindung. Hati lo lembut, setia, dan care banget sama orang terdekat. Temen curhat terbaik."},
+    'INFJ': {'en': "The Advocate. Quiet and mystical, yet very inspiring and tireless idealists.", 
+             'id': "Si Visioner Misterius. Lo peka, idealis, dan suka mikirin makna hidup mendalam. Langka nih!"},
+    'INTJ': {'en': "The Architect. Imaginative and strategic thinkers, with a plan for everything.", 
+             'id': "Si Strategis. Otak lo jalan terus, visioner, dan selalu punya rencana cadangan buat segala hal."},
+    'ISTP': {'en': "The Virtuoso. Bold and practical experimenters, masters of all kinds of tools.", 
+             'id': "Si Pengrajin. Lo cool, santuy, tapi jago banget mecahin masalah teknis secara praktis."},
+    'ISFP': {'en': "The Adventurer. Flexible and charming artists, always ready to explore and experience something new.", 
+             'id': "Si Seniman Bebas. Lo estetik, santai, dan suka banget nge-explore hal baru tanpa banyak drama."},
+    'INFP': {'en': "The Mediator. Poetic, kind and altruistic people, always eager to help a good cause.", 
+             'id': "Si Paling Perasa. Hati lo kayak kapas, puitis, idealis banget, dan selalu mau bikin dunia lebih baik."},
+    'INTP': {'en': "The Logician. Innovative inventors with an unquenchable thirst for knowledge.", 
+             'id': "Si Pemikir Kritis. Lo kepoan parah, logis abis, dan suka banget debat teori sampe pagi."},
+    'ESTP': {'en': "The Entrepreneur. Smart, energetic and very perceptive people, who truly enjoy living on the edge.", 
+             'id': "Si Pemberani. Lo enerjik, spontan, dan jago banget ngambil peluang dalam situasi mepet."},
+    'ESFP': {'en': "The Entertainer. Spontaneous, energetic and enthusiastic people - life is never boring around them.", 
+             'id': "Si Penghibur. Lo asik parah, spontan, dan selalu jadi pusat perhatian di tongkrongan."},
+    'ENFP': {'en': "The Campaigner. Enthusiastic, creative and sociable free spirits, who can always find a reason to smile.", 
+             'id': "Si Semangat 45. Lo kreatif, ramah, dan punya energi positif yang nular ke semua orang."},
+    'ENTP': {'en': "The Debater. Smart and curious thinkers who cannot resist an intellectual challenge.", 
+             'id': "Si Pendebat Ulung. Lo pinter, kritis, dan iseng banget suka mancing debat cuma buat seru-seruan."},
+    'ESTJ': {'en': "The Executive. Excellent administrators, unsurpassed at managing things - or people.", 
+             'id': "Si Bos Tegas. Lo jago ngatur, disiplin, dan gak suka liat ada yang lelet atau berantakan."},
+    'ESFJ': {'en': "The Consul. Extraordinarily caring, social and popular people, always eager to help.", 
+             'id': "Si Paling Gaul. Lo ramah, suka nolong, dan care banget sama harmoni di sirkel pertemanan."},
+    'ENFJ': {'en': "The Protagonist. Charismatic and inspiring leaders, able to mesmerize their listeners.", 
+             'id': "Si Pemimpin Karismatik. Lo jago banget ngomong, inspiratif, dan bisa bikin orang lain nurut sama lo."},
+    'ENTJ': {'en': "The Commander. Bold, imaginative and strong-willed leaders, always finding a way - or making one.", 
+             'id': "Si Jenderal. Lo ambisius, tegas, dan punya bakat alami buat mimpin dan naklukin tantangan."}
+}
+
 class NLPHandler:
+    # ... code before ...
+    # (The existing static methods load_models, translate_to_english, extract_keywords are unchanged)
+    # Re-writing predict_all to include explanation logic
+
     @staticmethod
     def load_models():
         global _model_mbti, _model_emotion
         print(f"📂 Loading models from: {BASE_DIR}")
-        print(f"📁 MBTI path: {MBTI_PATH} (exists: {os.path.exists(MBTI_PATH)})")
-        print(f"📁 Emotion path: {EMOTION_PATH} (exists: {os.path.exists(EMOTION_PATH)})")
         
         if _model_mbti is None and os.path.exists(MBTI_PATH):
             try: 
                 _model_mbti = joblib.load(MBTI_PATH)
-                print("✅ MBTI model loaded successfully")
-            except Exception as e: 
-                print(f"❌ MBTI model load error: {e}")
+            except Exception as e: print(f"❌ MBTI Load Error: {e}")
         
         if _model_emotion is None and os.path.exists(EMOTION_PATH):
             try: 
                 _model_emotion = joblib.load(EMOTION_PATH)
-                print("✅ Emotion model loaded successfully")
-            except Exception as e: 
-                print(f"❌ Emotion model load error: {e}")
+            except Exception as e: print(f"❌ Emotion Load Error: {e}")
 
     @staticmethod
     def translate_to_english(text):
@@ -79,25 +113,40 @@ class NLPHandler:
         NLPHandler.load_models() 
         processed_text = NLPHandler.translate_to_english(raw_text)
         
+        # --- MBTI PREDICTION ---
         mbti_result = "UNKNOWN"
         if _model_mbti:
             try: mbti_result = _model_mbti.predict([processed_text])[0]
             except: pass
         
+        # --- EMOTION PREDICTION & CONFIDENCE ---
         emotion_data = {"id": "Kompleks", "en": "Complex", "raw": "unknown"}
+        confidence_score = 0.0
+        
         if _model_emotion:
             try:
                 pred_label = "neutral"
                 if hasattr(_model_emotion, "predict_proba"):
                     probs = _model_emotion.predict_proba([processed_text])[0]
                     classes = _model_emotion.classes_
+                    
+                    # Neutral dampening logic
                     neutral_indices = [i for i, c in enumerate(classes) if c.lower() == 'neutral']
                     if neutral_indices:
                         idx = neutral_indices[0]
                         if probs[idx] < 0.65: probs[idx] = 0.0
+                        
+                    # RE-NORMALIZE PROBABILITIES
+                    # Agar sisa probabilitas naik proporsional. 
+                    # Misal: [0.1, 0.1, 0.1, 0.0] -> [0.33, 0.33, 0.33, 0.0]
+                    total_prob = np.sum(probs)
+                    if total_prob > 0:
+                        probs = probs / total_prob
+                        
                     if np.sum(probs) > 0:
                         best_idx = np.argmax(probs)
                         pred_label = classes[best_idx]
+                        confidence_score = float(probs[best_idx])
                     else:
                         pred_label = _model_emotion.predict([processed_text])[0]
                 else:
@@ -106,11 +155,40 @@ class NLPHandler:
                 indo_label = EMOTION_TRANSLATIONS.get(pred_label, pred_label.capitalize())
                 emotion_data = {"id": indo_label, "en": pred_label.capitalize(), "raw": pred_label}
             except: pass
-            
+
+        # --- REASONING GENERATION ---
+        mbti_desc = MBTI_EXPLANATIONS.get(mbti_result, {
+            'en': "Complex personality type.", 
+            'id': "Kepribadian yang cukup kompleks."
+        })
+
+        # Emotion Reasoning
+        conf_percent = int(confidence_score * 100)
+        emotion_reasoning = {
+            'en': f"Based on the text pattern, the AI is {conf_percent}% confident this matches '{emotion_data['en']}'.",
+            'id': f"Dari gaya tulisan lo, AI {conf_percent}% yakin mood lo lagi '{emotion_data['id']}'."
+        }
+        if conf_percent < 50 and confidence_score > 0:
+            emotion_reasoning = {
+                'en': f"The sentiment is mixed, but slightly leans towards '{emotion_data['en']}' ({conf_percent}%).",
+                'id': f"Mood lo campur aduk, tapi agak condong ke '{emotion_data['id']}' dikit ({conf_percent}%)."
+            }
+
+        # Keywords Reasoning
+        keywords_reasoning = {
+            'en': "These words appeared most frequently and define the main topic.",
+            'id': "Kata-kata ini paling sering muncul dan jadi inti topik lo."
+        }
+
         return {
             "mbti": mbti_result,
             "emotion": emotion_data,
-            "keywords": NLPHandler.extract_keywords(processed_text) 
+            "keywords": NLPHandler.extract_keywords(processed_text),
+            "reasoning": {
+                "mbti": mbti_desc,
+                "emotion": emotion_reasoning,
+                "keywords": keywords_reasoning
+            }
         }
 
     # --- JALUR RESMI: YOUTUBE DATA API ---

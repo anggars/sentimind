@@ -1,58 +1,42 @@
 [
-  {
-    "id": 1,
-    "text_id": "Saya merasa lebih berenergi setelah bergaul dengan banyak orang.",
-    "text_en": "I feel more energized after socializing with a large group of people.",
-    "dimension": "EI",
-    "direction": 1
-  },
-  {
-    "id": 2,
-    "text_id": "Saya lebih suka fokus pada fakta nyata daripada ide abstrak.",
-    "text_en": "I prefer to focus on real facts rather than abstract ideas.",
-    "dimension": "SN",
-    "direction": 1
-  },
-  {
-    "id": 3,
-    "text_id": "Saya mengambil keputusan berdasarkan logika, bukan perasaan.",
-    "text_en": "I make decisions based on logic rather than feelings.",
-    "dimension": "TF",
-    "direction": 1
-  },
-  {
-    "id": 4,
-    "text_id": "Saya suka membuat rencana detail sebelum melakukan sesuatu.",
-    "text_en": "I like to have a detailed plan before doing anything.",
-    "dimension": "JP",
-    "direction": 1
-  },
-  {
-    "id": 5,
-    "text_id": "Saya sering merasa lelah jika harus bersosialisasi terlalu lama.",
-    "text_en": "I often feel drained if I have to socialize for too long.",
-    "dimension": "EI",
-    "direction": -1
-  },
-  {
-    "id": 6,
-    "text_id": "Saya sering membayangkan masa depan dan kemungkinan-kemungkinannya.",
-    "text_en": "I often imagine the future and its possibilities.",
-    "dimension": "SN",
-    "direction": -1
-  },
-  {
-    "id": 7,
-    "text_id": "Saya mudah tersentuh secara emosional oleh cerita orang lain.",
-    "text_en": "I am easily emotionally moved by other people's stories.",
-    "dimension": "TF",
-    "direction": -1
-  },
-  {
-    "id": 8,
-    "text_id": "Saya lebih suka bertindak spontan daripada mengikuti jadwal kaku.",
-    "text_en": "I prefer to be spontaneous rather than following a rigid schedule.",
-    "dimension": "JP",
-    "direction": -1
-  }
+  { "id": 1, "dimension": "EI", "direction": 1, "text_id": "Saya merasa lebih berenergi setelah berinteraksi dengan banyak orang di pesta.", "text_en": "I feel more energized after interacting with many people at a party." },
+  { "id": 2, "dimension": "SN", "direction": 1, "text_id": "Saya lebih suka fokus pada apa yang nyata dan sedang terjadi saat ini.", "text_en": "I prefer to focus on what is real and happening right now." },
+  { "id": 3, "dimension": "TF", "direction": 1, "text_id": "Saya cenderung mengambil keputusan berdasarkan logika dan nalar.", "text_en": "I tend to make decisions based on logic and reason." },
+  { "id": 4, "dimension": "JP", "direction": 1, "text_id": "Saya suka memiliki jadwal yang terencana dan menaatinya.", "text_en": "I like to have a planned schedule and stick to it." },
+  { "id": 5, "dimension": "EI", "direction": -1, "text_id": "Saya sering merasa perlu menyendiri untuk mengisi ulang energi setelah bersosialisasi.", "text_en": "I often feel the need to be alone to recharge after socializing." },
+  { "id": 6, "dimension": "SN", "direction": -1, "text_id": "Saya sering berimajinasi tentang masa depan dan makna di balik segala sesuatu.", "text_en": "I often imagine the future and the meaning behind things." },
+  { "id": 7, "dimension": "TF", "direction": -1, "text_id": "Saya sering membiarkan hati dan perasaan membimbing keputusan saya.", "text_en": "I often let my heart and feelings guide my decisions." },
+  { "id": 8, "dimension": "JP", "direction": -1, "text_id": "Saya lebih suka fleksibel dan membiarkan hal-hal terjadi secara spontan.", "text_en": "I prefer to be flexible and let things happen spontaneously." },
+  { "id": 9, "dimension": "EI", "direction": 1, "text_id": "Saya mudah memulai percakapan dengan orang asing.", "text_en": "I find it easy to start conversations with strangers." },
+  { "id": 10, "dimension": "SN", "direction": 1, "text_id": "Saya lebih percaya pada pengalaman nyata daripada teori abstrak.", "text_en": "I trust actual experience more than abstract theories." },
+  { "id": 11, "dimension": "TF", "direction": 1, "text_id": "Kejujuran dan kebenaran lebih penting daripada menjaga perasaan orang lain.", "text_en": "Honesty and truth are more important than sparing someone's feelings." },
+  { "id": 12, "dimension": "JP", "direction": 1, "text_id": "Saya merasa gelisah jika tugas belum selesai atau rencana belum dibuat.", "text_en": "I feel uneasy if tasks are not finished or plans are not made." },
+  { "id": 13, "dimension": "EI", "direction": -1, "text_id": "Saya lebih suka mendengarkan daripada menjadi pusat perhatian.", "text_en": "I prefer listening over being the center of attention." },
+  { "id": 14, "dimension": "SN", "direction": -1, "text_id": "Saya sering tersesat dalam pikiran dan ide-ide saya sendiri.", "text_en": "I often get lost in my own thoughts and ideas." },
+  { "id": 15, "dimension": "TF", "direction": -1, "text_id": "Saya sangat peduli dengan keharmonisan dan menghindari konflik.", "text_en": "I care deeply about harmony and avoid conflict." },
+  { "id": 16, "dimension": "JP", "direction": -1, "text_id": "Saya sering mengerjakan sesuatu pada menit-menit terakhir.", "text_en": "I often do things at the last minute." },
+  { "id": 17, "dimension": "EI", "direction": 1, "text_id": "Saya punya lingkaran teman yang sangat luas.", "text_en": "I have a very wide circle of friends." },
+  { "id": 18, "dimension": "SN", "direction": 1, "text_id": "Saya sangat teliti dan memperhatikan detail kecil.", "text_en": "I am very meticulous and pay attention to small details." },
+  { "id": 19, "dimension": "TF", "direction": 1, "text_id": "Saya bisa tetap tenang dan objektif dalam situasi emosional.", "text_en": "I can remain calm and objective in emotional situations." },
+  { "id": 20, "dimension": "JP", "direction": 1, "text_id": "Saya suka membuat daftar tugas (to-do list).", "text_en": "I like making to-do lists." },
+  { "id": 21, "dimension": "EI", "direction": -1, "text_id": "Saya merasa canggung di keramaian.", "text_en": "I feel awkward in crowds." },
+  { "id": 22, "dimension": "SN", "direction": -1, "text_id": "Saya sering berpikir 'bagaimana jika' daripada 'apa adanya'.", "text_en": "I often think 'what if' rather than 'what is'." },
+  { "id": 23, "dimension": "TF", "direction": -1, "text_id": "Saya mudah empati dan merasakan apa yang dirasakan orang lain.", "text_en": "I easily empathize and feel what others are feeling." },
+  { "id": 24, "dimension": "JP", "direction": -1, "text_id": "Saya tidak suka dikekang oleh aturan yang ketat.", "text_en": "I dislike being constrained by strict rules." },
+  { "id": 25, "dimension": "EI", "direction": 1, "text_id": "Saya aktif berpartisipasi dalam diskusi kelompok.", "text_en": "I actively participate in group discussions." },
+  { "id": 26, "dimension": "SN", "direction": 1, "text_id": "Saya lebih suka instruksi yang jelas dan langkah demi langkah.", "text_en": "I prefer clear, step-by-step instructions." },
+  { "id": 27, "dimension": "TF", "direction": 1, "text_id": "Saya lebih sering menganalisis masalah daripada menghibur orang.", "text_en": "I analyze problems more often than I comfort people." },
+  { "id": 28, "dimension": "JP", "direction": 1, "text_id": "Saya merasa puas ketika menyelesaikan pekerjaan jauh sebelum tenggat waktu.", "text_en": "I feel satisfied when finishing work well before the deadline." },
+  { "id": 29, "dimension": "EI", "direction": -1, "text_id": "Saya butuh waktu lama untuk terbuka pada orang baru.", "text_en": "It takes me a long time to open up to new people." },
+  { "id": 30, "dimension": "SN", "direction": -1, "text_id": "Saya sering melihat pola dan hubungan yang tidak dilihat orang lain.", "text_en": "I often see patterns and connections that others miss." },
+  { "id": 31, "dimension": "TF", "direction": -1, "text_id": "Saya sering mengambil keputusan berdasarkan kata hati.", "text_en": "I often make decisions based on my gut feeling." },
+  { "id": 32, "dimension": "JP", "direction": -1, "text_id": "Saya menikmati kejutan dan perubahan rencana.", "text_en": "I enjoy surprises and changes in plans." },
+  { "id": 33, "dimension": "EI", "direction": 1, "text_id": "Saya sering bertindak dulu, berpikir kemudian.", "text_en": "I often act first, think later." },
+  { "id": 34, "dimension": "SN", "direction": 1, "text_id": "Saya fokus pada fakta dan data, bukan opini.", "text_en": "I focus on facts and data, not opinions." },
+  { "id": 35, "dimension": "TF", "direction": 1, "text_id": "Debat intelektual lebih menarik daripada obrolan ringan.", "text_en": "Intellectual debates are more interesting than small talk." },
+  { "id": 36, "dimension": "JP", "direction": 1, "text_id": "Saya suka lingkungan kerja yang teratur dan terstruktur.", "text_en": "I like an organized and structured work environment." },
+  { "id": 37, "dimension": "EI", "direction": -1, "text_id": "Saya lebih produktif saat bekerja sendirian.", "text_en": "I am more productive when working alone." },
+  { "id": 38, "dimension": "SN", "direction": -1, "text_id": "Saya suka berfilsafat tentang makna kehidupan.", "text_en": "I like philosophizing about the meaning of life." },
+  { "id": 39, "dimension": "TF", "direction": -1, "text_id": "Saya sulit bersikap tegas jika itu menyakiti orang lain.", "text_en": "I find it hard to be firm if it hurts others." },
+  { "id": 40, "dimension": "JP", "direction": -1, "text_id": "Saya sering memulai proyek baru tanpa menyelesaikan yang lama.", "text_en": "I often start new projects without finishing old ones." }
 ]
