@@ -22,24 +22,25 @@ jobs:
           git config --global user.email "anggariantosudrajat@gmail.com"
           git config --global user.name "anggars"
           git lfs install
-          
+
           # 2. Add Remote Hugging Face
           git remote add space https://anggars:$HF_TOKEN@huggingface.co/spaces/anggars/sentimind-api
-          
+
           # 3. Download Model Asli dari HF Space
           echo "Downloading models from Hugging Face..."
           curl -L -H "Authorization: Bearer $HF_TOKEN" https://huggingface.co/spaces/anggars/sentimind-api/resolve/main/api/data/model_mbti.pkl -o api/data/model_mbti.pkl
           curl -L -H "Authorization: Bearer $HF_TOKEN" https://huggingface.co/spaces/anggars/sentimind-api/resolve/main/api/data/model_emotion.pkl -o api/data/model_emotion.pkl
-          
+
           # 4. Pastikan file model ke-track sebagai LFS
           git lfs track "api/data/*.pkl"
           git add .gitattributes
-          
+
           # 5. Masukkan model (PAKSA pake -f karena sebelumnya di-ignore)
           git add -f api/data/*.pkl
-          
+
           # 6. "Amend" (Selipkan) model ini ke commit terakhir
           git commit --amend --no-edit
-          
-          # 7. Push Force
+
+          # 7. Push Force (Allow incomplete push karena model sudah ada di remote)
+          git config lfs.allowincompletepush true
           git push --force space main
