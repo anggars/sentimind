@@ -21,6 +21,7 @@ jobs:
           # 1. Setup User & LFS
           git config --global user.email "anggariantosudrajat@gmail.com"
           git config --global user.name "anggars"
+          git config --global lfs.allowincompletepush true
           git lfs install
 
           # 2. Add Remote Hugging Face
