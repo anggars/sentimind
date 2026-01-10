@@ -11,42 +11,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0
-          lfs: false
+          fetch-depth: 1 # Shallow clone is fine now
 
-      - name: Push to hub
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Hugging Face Hub CLI
+        run: pip install huggingface_hub
+
+      - name: Sync to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # 1. Setup User & LFS
-          git config --global user.email "anggariantosudrajat@gmail.com"
-          git config --global user.name "anggars"
-          git config --global lfs.allowincompletepush true
-          git lfs install
-
-          # 2. Add Remote Hugging Face
-          git remote add space https://anggars:$HF_TOKEN@huggingface.co/spaces/anggars/sentimind-api
-
-          # 3. Clean Phantom Files (Prevent LFS error on old paths)
-          git rm --ignore-unmatch api/model_mbti.pkl
-          git rm --ignore-unmatch api/data/model_mbti.pkl
-          git rm --ignore-unmatch api/data/model_emotion.pkl
-
-          # 4. Download Model Asli dari HF Space
-          echo "Fetching models from Hugging Face via Git..."
-          git fetch space main
-          git checkout space/main -- api/data/model_mbti.pkl api/data/model_emotion.pkl
-
-          # 5. Pastikan file model ke-track sebagai LFS
-          git lfs track "api/data/*.pkl"
-          git add .gitattributes
-
-          # 6. Masukkan model (Force add untuk memastikan LFS filter jalan)
-          ls -lah api/data/
-          git add -f api/data/*.pkl
-
-          # 7. Commit
-          git commit --amend --no-edit
-
-          # 8. Push Force (Normal, tanpa skip check)
-          git push --force space main
+          huggingface-cli upload anggars/sentimind-api . \
+            --repo-type space \
+            --exclude ".git/*" ".github/*" "**/*.pkl" \
+            --commit-message "Sync from GitHub Actions: ${{ github.sha }}"
