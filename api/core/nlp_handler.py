@@ -6,6 +6,7 @@ import numpy as np
 import html
 from deep_translator import GoogleTranslator
 from youtube_transcript_api import YouTubeTranscriptApi
+import google.generativeai as genai
 
 # --- CONFIG PATH ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -84,6 +85,108 @@ class NLPHandler:
                 _model_emotion = joblib.load(EMOTION_PATH)
             except Exception as e: print(f"❌ Emotion Load Error: {e}")
 
+    # --- GEMINI VALIDATOR SETUP ---
+    _gemini_model = None
+    
+    @staticmethod
+    def _init_gemini():
+        """Initialize Gemini model for validation (lazy loading)"""
+        if NLPHandler._gemini_model is None:
+            api_key = os.getenv("GEMINI_API_KEY")
+            if api_key:
+                try:
+                    genai.configure(api_key=api_key)
+                    NLPHandler._gemini_model = genai.GenerativeModel('gemini-2.0-flash-lite')
+                    print("✅ Gemini Validator Ready")
+                except Exception as e:
+                    print(f"⚠️ Gemini Init Failed: {e}")
+        return NLPHandler._gemini_model is not None
+    
+    @staticmethod
+    def _validate_with_gemini(text, ml_prediction):
+        """
+        Use Gemini to validate ML prediction.
+        Returns: (validated_mbti, confidence, reasoning)
+        """
+        if not NLPHandler._init_gemini():
+            return ml_prediction, 0.6, "ML only (Gemini unavailable)"
+        
+        # Skip validation for very short text (not enough context)
+        if len(text.split()) < 50:
+            return ml_prediction, 0.5, "Short text - ML prediction"
+        
+        prompt = f"""You are an MBTI expert. Analyze this text and determine the MOST LIKELY MBTI type based ONLY on the content.
+
+TEXT TO ANALYZE:
+"{text}"
+
+ANALYSIS FRAMEWORK:
+1. I/E (Introversion/Extraversion):
+   - E indicators: Mentions of social events, leading teams, networking, group activities, energized by people
+   - I indicators: Preference for solitude, reflection, working alone, drained by social interaction
+
+2. N/S (Intuition/Sensing):
+   - N indicators: Abstract thinking, future-focused, big picture, patterns, possibilities, theory
+   - S indicators: Concrete details, present-focused, practical, facts, reality, hands-on
+
+3. T/F (Thinking/Feeling):
+   - T indicators: Logic, efficiency, objectivity, direct communication, "facts over feelings"
+   - F indicators: Empathy, harmony, values, subjective decisions, people-focused
+
+4. J/P (Judging/Perceiving):
+   - J indicators: Planning, structure, deadlines, organization, schedules, decisive
+   - P indicators: Spontaneous, flexible, adaptable, open-ended, exploratory
+
+CRITICAL INSTRUCTIONS:
+- Analyze INDEPENDENTLY - ignore any preconceptions
+- Look for EXPLICIT behavioral indicators in the text
+- Weight E/I heavily on social energy language (not just content topic)
+- If text mentions "leading", "networking", "team meetings" → strong E signal
+- If text emphasizes "planning", "deadlines", "structure" → strong J signal
+
+Respond in this EXACT format:
+MBTI: [4-letter type]
+CONFIDENCE: [0.0-1.0]
+REASON: [One sentence citing specific text evidence]
+
+Example:
+MBTI: ENTJ
+CONFIDENCE: 0.88
+REASON: Explicit mentions of networking, leading teams, and structured planning indicate ENTJ.
+"""
+        
+        try:
+            response = NLPHandler._gemini_model.generate_content(prompt)
+            result_text = response.text.strip()
+            
+            # Parse response
+            lines = result_text.split('\n')
+            validated_mbti = ml_prediction
+            confidence = 0.7
+            reason = "Gemini validation"
+            
+            for line in lines:
+                if line.startswith('MBTI:'):
+                    validated_mbti = line.split(':', 1)[1].strip().upper()
+                elif line.startswith('CONFIDENCE:'):
+                    try:
+                        confidence = float(line.split(':', 1)[1].strip())
+                    except:
+                        confidence = 0.7
+                elif line.startswith('REASON:'):
+                    reason = line.split(':', 1)[1].strip()
+            
+            # Validate MBTI format (must be 4 chars)
+            if len(validated_mbti) != 4 or not all(c in 'IENTFSJP' for c in validated_mbti):
+                print(f"⚠️ Invalid Gemini MBTI: {validated_mbti}, using ML: {ml_prediction}")
+                return ml_prediction, 0.6, "Invalid Gemini response - using ML"
+            
+            return validated_mbti, confidence, reason
+            
+        except Exception as e:
+            print(f"⚠️ Gemini Validation Error: {e}")
+            return ml_prediction, 0.6, f"Gemini error - using ML"
+
     @staticmethod
     def translate_to_english(text):
         try:
@@ -113,11 +216,42 @@ class NLPHandler:
         NLPHandler.load_models() 
         processed_text = NLPHandler.translate_to_english(raw_text)
         
-        # --- MBTI PREDICTION ---
+        # --- MBTI PREDICTION WITH GEMINI VALIDATION ---
         mbti_result = "UNKNOWN"
+        mbti_confidence = 0.0
+        mbti_reasoning = ""
+        
         if _model_mbti:
-            try: mbti_result = _model_mbti.predict([processed_text])[0]
-            except: pass
+            try:
+                # Step 1: ML Model Prediction
+                ml_prediction = _model_mbti.predict([processed_text])[0]
+                print(f"📊 ML Prediction: {ml_prediction}")
+                
+                # Step 2: Gemini Validation (only if text is substantial)
+                if len(raw_text.split()) >= 50:
+                    validated_mbti, confidence, reason = NLPHandler._validate_with_gemini(
+                        processed_text, ml_prediction
+                    )
+                    mbti_result = validated_mbti
+                    mbti_confidence = confidence
+                    mbti_reasoning = reason
+                    
+                    if validated_mbti != ml_prediction:
+                        print(f"🔄 Gemini Override: {ml_prediction} → {validated_mbti} (Confidence: {confidence:.2f})")
+                    else:
+                        print(f"✅ Gemini Confirmed: {validated_mbti} (Confidence: {confidence:.2f})")
+                else:
+                    # Text too short for Gemini, use ML only
+                    mbti_result = ml_prediction
+                    mbti_confidence = 0.6
+                    mbti_reasoning = "Short text - ML prediction only"
+                    print(f"⚠️ Text too short (<50 words), using ML: {ml_prediction}")
+                    
+            except Exception as e:
+                print(f"❌ MBTI Prediction Error: {e}")
+                mbti_result = "INTJ"  # Fallback
+                mbti_confidence = 0.3
+                mbti_reasoning = "Error - fallback prediction"
         
         # --- EMOTION PREDICTION & CONFIDENCE ---
         emotion_data = {"id": "Kompleks", "en": "Complex", "raw": "unknown"}
@@ -161,6 +295,11 @@ class NLPHandler:
             'en': "Complex personality type.", 
             'id': "Kepribadian yang cukup kompleks."
         })
+        
+        # Add Gemini reasoning to MBTI description
+        if mbti_reasoning:
+            mbti_desc['validation'] = mbti_reasoning
+            mbti_desc['confidence'] = mbti_confidence
 
         # Emotion Reasoning
         conf_percent = int(confidence_score * 100)
