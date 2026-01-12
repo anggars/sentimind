@@ -111,9 +111,7 @@ class NLPHandler:
         if not NLPHandler._init_gemini():
             return ml_prediction, 0.6, "ML only (Gemini unavailable)"
         
-        # Skip validation for very short text (not enough context)
-        if len(text.split()) < 50:
-            return ml_prediction, 0.5, "Short text - ML prediction"
+
         
         prompt = f"""You are an MBTI expert. Analyze this text and determine the MOST LIKELY MBTI type based ONLY on the content.
 
@@ -227,25 +225,19 @@ REASON: Explicit mentions of networking, leading teams, and structured planning 
                 ml_prediction = _model_mbti.predict([processed_text])[0]
                 print(f"📊 ML Prediction: {ml_prediction}")
                 
-                # Step 2: Gemini Validation (only if text is substantial)
-                if len(raw_text.split()) >= 50:
-                    validated_mbti, confidence, reason = NLPHandler._validate_with_gemini(
-                        processed_text, ml_prediction
-                    )
-                    mbti_result = validated_mbti
-                    mbti_confidence = confidence
-                    mbti_reasoning = reason
-                    
-                    if validated_mbti != ml_prediction:
-                        print(f"🔄 Gemini Override: {ml_prediction} → {validated_mbti} (Confidence: {confidence:.2f})")
-                    else:
-                        print(f"✅ Gemini Confirmed: {validated_mbti} (Confidence: {confidence:.2f})")
+                # Step 2: Gemini Validation (Always run)
+                # if len(raw_text.split()) >= 50:
+                validated_mbti, confidence, reason = NLPHandler._validate_with_gemini(
+                    processed_text, ml_prediction
+                )
+                mbti_result = validated_mbti
+                mbti_confidence = confidence
+                mbti_reasoning = reason
+                
+                if validated_mbti != ml_prediction:
+                    print(f"🔄 Gemini Override: {ml_prediction} → {validated_mbti} (Confidence: {confidence:.2f})")
                 else:
-                    # Text too short for Gemini, use ML only
-                    mbti_result = ml_prediction
-                    mbti_confidence = 0.6
-                    mbti_reasoning = "Short text - ML prediction only"
-                    print(f"⚠️ Text too short (<50 words), using ML: {ml_prediction}")
+                    print(f"✅ Gemini Confirmed: {validated_mbti} (Confidence: {confidence:.2f})")
                     
             except Exception as e:
                 print(f"❌ MBTI Prediction Error: {e}")
