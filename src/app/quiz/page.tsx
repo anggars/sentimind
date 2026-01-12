@@ -87,6 +87,11 @@ export default function QuizPage() {
       });
   }, []);
 
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentPage]);
+
   const totalPages = Math.ceil(questions.length / QUESTIONS_PER_PAGE);
   const currentQuestions = questions.slice(
     currentPage * QUESTIONS_PER_PAGE,
@@ -104,7 +109,6 @@ export default function QuizPage() {
   const handleNext = () => {
     if (currentPage < totalPages - 1) {
       setCurrentPage(currentPage + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       submitAnswers();
     }
@@ -113,7 +117,6 @@ export default function QuizPage() {
   const handlePrev = () => {
     if (currentPage > 0) {
       setCurrentPage(currentPage - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -200,6 +203,10 @@ export default function QuizPage() {
 
   if (questions.length === 0) return null;
 
+  // Calculate actual progress based on answered questions
+  const answeredCount = Object.keys(answers).length;
+  const progressPercent = Math.round((answeredCount / questions.length) * 100);
+
   return (
     <div className="w-full pt-28 pb-12 px-4 sm:px-6 lg:px-8 font-sans flex flex-col items-center">
       <div className="max-w-3xl w-full z-10">
@@ -223,13 +230,14 @@ export default function QuizPage() {
             <span>
               {content.progress} {currentPage + 1} / {totalPages}
             </span>
-            <span>{Math.round((currentPage / totalPages) * 100)}%</span>
+            {/* Show overall progress */}
+            <span>{progressPercent}%</span>
           </div>
           <div className="w-full h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${((currentPage + 1) / totalPages) * 100}%` }}
-              className="h-full bg-orange-500 rounded-full"
+              animate={{ width: `${progressPercent}%` }}
+              className="h-full bg-orange-600 rounded-full"
             />
           </div>
         </div>
