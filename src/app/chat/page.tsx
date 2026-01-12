@@ -517,11 +517,16 @@ export default function ChatPage() {
                 setInputValue(e.target.value);
                 e.target.style.height = "auto";
                 e.target.style.height = `${e.target.scrollHeight}px`;
+
+                // Toggle scrollbar only if height exceeds max (200px)
+                if (e.target.scrollHeight > 200) {
+                  e.target.style.overflowY = "auto";
+                } else {
+                  e.target.style.overflowY = "hidden";
+                }
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
-                  // Check if mobile (basic check using width)
-                  // Or clearer: default is newline, but if desktop, prevent default and send
                   if (window.innerWidth >= 768) {
                     e.preventDefault();
                     handleSendMessage(inputValue);
@@ -531,8 +536,8 @@ export default function ChatPage() {
               placeholder={content.placeholder}
               disabled={isLoading}
               rows={1}
-              style={{ maxHeight: "200px" }}
-              className="flex-1 bg-transparent border-none outline-none focus:ring-0 focus:outline-none rounded-2xl px-2 py-3 text-base text-gray-800 dark:text-gray-200 placeholder:text-gray-400 resize-none overflow-y-auto"
+              style={{ maxHeight: "200px", overflowY: "hidden" }}
+              className="flex-1 bg-transparent border-none outline-none focus:ring-0 focus:outline-none rounded-2xl px-2 py-3 text-base text-gray-800 dark:text-gray-200 placeholder:text-gray-400 resize-none"
             />
             <button
               onClick={() => handleSendMessage(inputValue)}
