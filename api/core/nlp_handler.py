@@ -7,6 +7,7 @@ import html
 from deep_translator import GoogleTranslator
 from youtube_transcript_api import YouTubeTranscriptApi
 import google.generativeai as genai
+import time
 
 # --- CONFIG PATH ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -14,7 +15,9 @@ MBTI_PATH = os.path.join(BASE_DIR, 'data', 'model_mbti.pkl')
 EMOTION_PATH = os.path.join(BASE_DIR, 'data', 'model_emotion.pkl')
 
 _model_mbti = None
-_model_emotion = None
+_classifier_mbti_transformer = None
+_classifier_roberta = None
+_classifier_distilbert = None
 
 EMOTION_TRANSLATIONS = {
     'admiration': 'Kagum', 'amusement': 'Terhibur', 'anger': 'Marah',
@@ -72,18 +75,35 @@ class NLPHandler:
 
     @staticmethod
     def load_models():
-        global _model_mbti, _model_emotion
-        print(f"📂 Loading models from: {BASE_DIR}")
+        global _model_mbti, _classifier_mbti_transformer, _classifier_roberta, _classifier_distilbert
+        print(f"Loading models from: {BASE_DIR}")
         
         if _model_mbti is None and os.path.exists(MBTI_PATH):
             try: 
+                print(f"Loading MBTI Model (SVM) from: {MBTI_PATH}")
                 _model_mbti = joblib.load(MBTI_PATH)
-            except Exception as e: print(f"❌ MBTI Load Error: {e}")
-        
-        if _model_emotion is None and os.path.exists(EMOTION_PATH):
-            try: 
-                _model_emotion = joblib.load(EMOTION_PATH)
-            except Exception as e: print(f"❌ Emotion Load Error: {e}")
+            except Exception as e: print(f"MBTI Load Error: {e}")
+
+        if _classifier_mbti_transformer is None:
+            try:
+                print(f"Loading MBTI Model (Transformer): parka735/mbti-classifier") 
+                from transformers import pipeline
+                _classifier_mbti_transformer = pipeline("text-classification", model="parka735/mbti-classifier", top_k=1)
+            except Exception as e: print(f"MBTI Transformer Load Error: {e}")
+
+        if _classifier_roberta is None:
+            try:
+                print("Loading Emotion Model 1: SamLowe/roberta-base-go_emotions")
+                from transformers import pipeline
+                _classifier_roberta = pipeline("text-classification", model="SamLowe/roberta-base-go_emotions", top_k=None)
+            except Exception as e: print(f"Emotion 1 Load Error: {e}")
+
+        if _classifier_distilbert is None:
+            try:
+                print("Loading Emotion Model 2: joeddav/distilbert-base-uncased-go-emotions-student")
+                from transformers import pipeline
+                _classifier_distilbert = pipeline("text-classification", model="joeddav/distilbert-base-uncased-go-emotions-student", top_k=None)
+            except Exception as e: print(f"Emotion 2 Load Error: {e}")
 
     # --- GEMINI VALIDATOR SETUP ---
     _gemini_model = None
@@ -97,9 +117,9 @@ class NLPHandler:
                 try:
                     genai.configure(api_key=api_key)
                     NLPHandler._gemini_model = genai.GenerativeModel('gemini-2.0-flash-lite')
-                    print("✅ Gemini Validator Ready")
+                    print("Gemini Validator Ready")
                 except Exception as e:
-                    print(f"⚠️ Gemini Init Failed: {e}")
+                    print(f"Gemini Init Failed: {e}")
         return NLPHandler._gemini_model is not None
     
     @staticmethod
@@ -176,13 +196,13 @@ REASON: Explicit mentions of networking, leading teams, and structured planning 
             
             # Validate MBTI format (must be 4 chars)
             if len(validated_mbti) != 4 or not all(c in 'IENTFSJP' for c in validated_mbti):
-                print(f"⚠️ Invalid Gemini MBTI: {validated_mbti}, using ML: {ml_prediction}")
+                print(f"Invalid Gemini MBTI: {validated_mbti}, using ML: {ml_prediction}")
                 return ml_prediction, 0.6, "Invalid Gemini response - using ML"
             
             return validated_mbti, confidence, reason
             
         except Exception as e:
-            print(f"⚠️ Gemini Validation Error: {e}")
+            print(f"Gemini Validation Error: {e}")
             return ml_prediction, 0.6, f"Gemini error - using ML"
 
     @staticmethod
@@ -219,68 +239,127 @@ REASON: Explicit mentions of networking, leading teams, and structured planning 
         mbti_confidence = 0.0
         mbti_reasoning = ""
         
-        if _model_mbti:
+        if _model_mbti and _classifier_mbti_transformer:
             try:
-                # Step 1: ML Model Prediction
-                ml_prediction = _model_mbti.predict([processed_text])[0]
-                print(f"📊 ML Prediction: {ml_prediction}")
+                # 1. SVM Prediction (Keyword/Structure)
+                svm_pred = _model_mbti.predict([processed_text])[0]
                 
-                # Step 2: Gemini Validation (Always run)
-                # if len(raw_text.split()) >= 50:
-                validated_mbti, confidence, reason = NLPHandler._validate_with_gemini(
-                    processed_text, ml_prediction
-                )
-                mbti_result = validated_mbti
-                mbti_confidence = confidence
-                mbti_reasoning = reason
+                # 2. Transformer Prediction
+                trans_input = processed_text[:2000]
+                trans_output = _classifier_mbti_transformer(trans_input)
                 
-                if validated_mbti != ml_prediction:
-                    print(f"🔄 Gemini Override: {ml_prediction} → {validated_mbti} (Confidence: {confidence:.2f})")
+                # Handle nested list output (common in batched pipelines)
+                # Output can be [{'label': 'A'}] OR [[{'label': 'A'}]]
+                if isinstance(trans_output, list) and isinstance(trans_output[0], list):
+                    trans_res = trans_output[0][0]
+                elif isinstance(trans_output, list):
+                    trans_res = trans_output[0]
                 else:
-                    print(f"✅ Gemini Confirmed: {validated_mbti} (Confidence: {confidence:.2f})")
+                    trans_res = trans_output
+
+                trans_pred = trans_res['label'].upper()
+                trans_conf = trans_res['score']
+                
+                print(f"[Voting] SVM='{svm_pred}' vs Transformer='{trans_pred}' ({trans_conf:.2%})")
+
+                # 3. Consensus Logic
+                if svm_pred == trans_pred:
+                    # Both agree! High confidence.
+                    print("[Check] Models AGREE! Auto-approving.")
+                    mbti_result = svm_pred
+                    mbti_confidence = 0.95
+                    mbti_reasoning = f"Both AI models agreed strictly on {mbti_result}."
                     
+                    # Optional: Lightweight Gemini check just for reasoning text, IF enabled.
+                    # validation is skipped for speed since we have consensus.
+                else:
+                    # Disagreement! Gemini is the Tie-Breaker.
+                    print("[Warning] Models DISAGREE! Summoning Gemini Judge...")
+                    
+                    # Prepare context for Gemini
+                    validation_context = f"Model A (Keyword) detected {svm_pred}. Model B (Context) detected {trans_pred}."
+                    
+                    validated_mbti, confidence, reason = NLPHandler._validate_with_gemini(
+                        processed_text, validation_context 
+                    )
+                    
+                    mbti_result = validated_mbti
+                    mbti_confidence = confidence
+                    mbti_reasoning = reason
+                    print(f"[Gemini] Verdict: {mbti_result} (Confidence: {confidence})")
+
             except Exception as e:
-                print(f"❌ MBTI Prediction Error: {e}")
-                mbti_result = "INTJ"  # Fallback
-                mbti_confidence = 0.3
-                mbti_reasoning = "Error - fallback prediction"
-        
-        # --- EMOTION PREDICTION & CONFIDENCE ---
-        emotion_data = {"id": "Kompleks", "en": "Complex", "raw": "unknown"}
+                print(f"[Error] Hybrid MBTI Error: {e}")
+                # Fallback to SVM if everything explodes
+                try: 
+                    mbti_result = _model_mbti.predict([processed_text])[0]
+                    mbti_confidence = 0.4
+                except:
+                    mbti_result = "INTJ"
+                mbti_reasoning = "System fallback due to hybrid error."
+
+        # --- EMOTION PREDICTION (HYBRID TRANSFORMER) ---
+        emotion_data = {"id": "Netral", "en": "Neutral", "raw": "neutral", "list": []}
         confidence_score = 0.0
         
-        if _model_emotion:
-            try:
-                pred_label = "neutral"
-                if hasattr(_model_emotion, "predict_proba"):
-                    probs = _model_emotion.predict_proba([processed_text])[0]
-                    classes = _model_emotion.classes_
-                    
-                    # Neutral dampening logic
-                    neutral_indices = [i for i, c in enumerate(classes) if c.lower() == 'neutral']
-                    if neutral_indices:
-                        idx = neutral_indices[0]
-                        if probs[idx] < 0.65: probs[idx] = 0.0
-                        
-                    # RE-NORMALIZE PROBABILITIES
-                    # Agar sisa probabilitas naik proporsional. 
-                    # Misal: [0.1, 0.1, 0.1, 0.0] -> [0.33, 0.33, 0.33, 0.0]
-                    total_prob = np.sum(probs)
-                    if total_prob > 0:
-                        probs = probs / total_prob
-                        
-                    if np.sum(probs) > 0:
-                        best_idx = np.argmax(probs)
-                        pred_label = classes[best_idx]
-                        confidence_score = float(probs[best_idx])
-                    else:
-                        pred_label = _model_emotion.predict([processed_text])[0]
-                else:
-                    pred_label = _model_emotion.predict([processed_text])[0]
+        try:
+             # Load pipelines (Ensured in load_models)
+            global _classifier_roberta, _classifier_distilbert
+            
+            # Truncate for safety
+            emo_input = processed_text[:1500] 
+            
+            combined_scores = {}
+            
+            def add_scores(results):
+                if isinstance(results, list) and isinstance(results[0], list):
+                    results = results[0]
+                for item in results:
+                    label = item['label']
+                    score = item['score']
+                    combined_scores[label] = combined_scores.get(label, 0) + score
 
-                indo_label = EMOTION_TRANSLATIONS.get(pred_label, pred_label.capitalize())
-                emotion_data = {"id": indo_label, "en": pred_label.capitalize(), "raw": pred_label}
-            except: pass
+            if _classifier_roberta:
+                 add_scores(_classifier_roberta(emo_input))
+            if _classifier_distilbert:
+                 add_scores(_classifier_distilbert(emo_input))
+
+            # Normalize and filter
+            if 'neutral' in combined_scores:
+                del combined_scores['neutral'] # Remove neutral preference
+            
+            sorted_emotions = sorted(combined_scores.items(), key=lambda x: x[1], reverse=True)
+            
+            top_3_list = []
+            if sorted_emotions:
+                # Top 1 for legacy compatibility
+                best_label, total_score = sorted_emotions[0]
+                confidence_score = (total_score / 2.0) 
+                
+                indo_label = EMOTION_TRANSLATIONS.get(best_label, best_label.capitalize())
+                emotion_data = {
+                    "id": indo_label, 
+                    "en": best_label.capitalize(), 
+                    "raw": best_label,
+                    "list": []  # Will populate below
+                }
+                
+                # Populate Top 3 List
+                for label, score in sorted_emotions[:3]:
+                    norm_score = score / 2.0
+                    top_3_list.append({
+                        "en": label.capitalize(),
+                        "id": EMOTION_TRANSLATIONS.get(label, label.capitalize()),
+                        "score": norm_score
+                    })
+                
+                emotion_data["list"] = top_3_list
+                print(f"Emotion Hybrid Top 1: {emotion_data['en']} ({confidence_score:.2%})")
+            else:
+                print("Emotion Hybrid: No clear emotion found (Neutral)")
+
+        except Exception as e:
+            print(f"Emotion Prediction Error: {e}") 
 
         # --- REASONING GENERATION ---
         mbti_desc = MBTI_EXPLANATIONS.get(mbti_result, {
@@ -292,19 +371,21 @@ REASON: Explicit mentions of networking, leading teams, and structured planning 
         if mbti_reasoning:
             mbti_desc['validation'] = mbti_reasoning
             mbti_desc['confidence'] = mbti_confidence
-
+            
         # Emotion Reasoning
         conf_percent = int(confidence_score * 100)
-        emotion_reasoning = {
-            'en': f"Based on the text pattern, the AI is {conf_percent}% confident this matches '{emotion_data['en']}'.",
-            'id': f"Dari gaya tulisan lo, AI {conf_percent}% yakin mood lo lagi '{emotion_data['id']}'."
-        }
-        if conf_percent < 50 and confidence_score > 0:
-            emotion_reasoning = {
-                'en': f"The sentiment is mixed, but slightly leans towards '{emotion_data['en']}' ({conf_percent}%).",
-                'id': f"Mood lo campur aduk, tapi agak condong ke '{emotion_data['id']}' dikit ({conf_percent}%)."
-            }
+        
+        # Generate dynamic reasoning for Top 3
+        em_list_str = ""
+        if 'list' in emotion_data and emotion_data['list']:
+             labels = [f"{item['en']} ({int(item['score']*100)}%)" for item in emotion_data['list']]
+             em_list_str = ", ".join(labels)
 
+        emotion_reasoning = {
+            'en': f"Dominant emotion is '{emotion_data['en']}'. Mix: {em_list_str}.",
+            'id': f"Emosi dominan '{emotion_data['id']}'. Campuran: {em_list_str}."
+        }
+        
         # Keywords Reasoning
         keywords_reasoning = {
             'en': "These words appeared most frequently and define the main topic.",
@@ -325,7 +406,7 @@ REASON: Explicit mentions of networking, leading teams, and structured planning 
     # --- JALUR RESMI: YOUTUBE DATA API ---
     @staticmethod
     def _fetch_official_api(video_id, api_key):
-        print(f"🔑 Using Official API Key for {video_id}...")
+        print(f"Using Official API Key for {video_id}...")
         
         result = {
             "video": None,
@@ -398,7 +479,7 @@ REASON: Explicit mentions of networking, leading teams, and structured planning 
             return result
 
         except Exception as e:
-            print(f"❌ Official API Error: {e}")
+            print(f"Official API Error: {e}")
             return None
 
     @staticmethod
@@ -412,7 +493,7 @@ REASON: Explicit mentions of networking, leading teams, and structured planning 
                 return official_data
         
         # 2. PRIORITAS KEDUA: Fallback Scraping
-        print(f"🎬 Fetching transcript (fallback) for: {video_id}")
+        print(f"Fetching transcript (fallback) for: {video_id}")
         try:
             transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['id', 'en', 'en-US'])
             full_text = " ".join([item['text'] for item in transcript_list])

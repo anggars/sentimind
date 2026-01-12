@@ -379,50 +379,73 @@ export default function AnalysisPage() {
             >
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* MBTI */}
+                {/* MBTI */}
                 <div className="liquid-glass p-5 border-t-4 border-orange-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl flex flex-col h-full group hover:bg-white/80 dark:hover:bg-white/5 transition-all">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-2">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-0 border-b border-gray-100 dark:border-white/5 pb-3">
                     <BrainCircuit size={12} /> {content.resMBTI}
                   </h3>
-                  <div className="flex-1 flex flex-col items-center justify-center gap-2">
+                  <div className="flex-1 flex flex-col items-center justify-center gap-3">
                     <div className="text-4xl font-black text-orange-600 tracking-tight">
                       {result.mbti_type}
                     </div>
-                    {/* Reasoning MBTI */}
-                    {result.reasoning && (
-                      <p className="text-xs text-center text-gray-600 dark:text-gray-300 leading-relaxed px-2 font-medium">
+                  </div>
+
+                  {/* Footer Reasoning */}
+                  {result.reasoning && (
+                    <div className="mt-auto pt-3 border-t border-orange-100 dark:border-white/5 w-full">
+                      <p className="text-[10px] text-center text-gray-500 dark:text-gray-400 leading-relaxed px-2 font-medium italic">
                         {result.reasoning.mbti?.[lang] ||
                           "Analisis kepribadian mendalam."}
                       </p>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* EMOTION */}
                 <div className="liquid-glass p-5 border-t-4 border-green-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl flex flex-col h-full group hover:bg-white/80 dark:hover:bg-white/5 transition-all">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-2">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-0 border-b border-gray-100 dark:border-white/5 pb-3">
                     <Smile size={12} /> {content.resSentiment}
                   </h3>
-                  <div className="flex-1 flex flex-col items-center justify-center gap-2">
-                    <div className="text-2xl font-bold capitalize text-green-600 dark:text-green-400 truncate px-2 text-center">
-                      {result.emotion
-                        ? result.emotion[lang] ||
-                          result.emotion.id ||
-                          result.emotion
-                        : result.sentiment}
-                    </div>
-                    {/* Reasoning Emotion */}
-                    {result.reasoning && (
-                      <p className="text-xs text-center text-gray-600 dark:text-gray-300 leading-relaxed px-2 font-medium">
+
+                  <div className="flex-1 flex flex-col items-center justify-center gap-3 w-full">
+                    {/* Unified Top 3 List (Badge Style like Keywords) */}
+                    {result.emotion?.list ? (
+                      <div className="flex flex-wrap gap-2 justify-center items-center w-full">
+                        {result.emotion.list.map((item: any, idx: number) => (
+                          <span
+                            key={idx}
+                            className="bg-green-100 dark:bg-green-900/30 px-3 py-1.5 rounded-full text-xs font-bold text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800/50 capitalize shadow-sm"
+                          >
+                            {lang === "id" ? item.id : item.en}{" "}
+                            {Math.round(item.score * 100)}%
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-2xl font-bold capitalize text-green-600 dark:text-green-400 truncate px-2 text-center">
+                        {result.emotion
+                          ? result.emotion[lang] ||
+                            result.emotion.id ||
+                            result.emotion
+                          : result.sentiment}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer Reasoning */}
+                  {result.reasoning && (
+                    <div className="mt-auto pt-3 border-t border-green-100 dark:border-green-800/20 w-full">
+                      <p className="text-[10px] text-center text-gray-500 dark:text-gray-400 italic leading-relaxed px-2 font-medium">
                         {result.reasoning.emotion?.[lang] ||
                           "Analisis sentimen teks."}
                       </p>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* KEYWORDS */}
                 <div className="liquid-glass p-5 border-t-4 border-blue-500 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-xl h-full flex flex-col group hover:bg-white/80 dark:hover:bg-white/5 transition-all">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-3">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex justify-center gap-2 items-center text-gray-800 dark:text-gray-200 mb-0 border-b border-gray-100 dark:border-white/5 pb-3">
                     <Tag size={12} /> {content.resKeywords}
                   </h3>
                   <div className="flex-1 flex flex-col items-center justify-center gap-3">
@@ -438,14 +461,17 @@ export default function AnalysisPage() {
                           </span>
                         ))}
                     </div>
-                    {/* Reasoning Keywords */}
-                    {result.reasoning && (
-                      <p className="text-[10px] text-center text-gray-500 dark:text-gray-400 mt-1 italic">
+                  </div>
+
+                  {/* Footer Reasoning */}
+                  {result.reasoning && (
+                    <div className="mt-auto pt-3 border-t border-blue-100 dark:border-white/5 w-full">
+                      <p className="text-[10px] text-center text-gray-500 dark:text-gray-400 italic font-medium">
                         {result.reasoning.keywords?.[lang] ||
                           "Kata kunci dominan."}
                       </p>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

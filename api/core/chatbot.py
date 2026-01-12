@@ -4,12 +4,12 @@ import google.generativeai as genai
 
 class MBTIChatbot:
     def __init__(self):
-        print("🚀 Initializing MBTI Chatbot (Lite Version)...")
+        print("[INIT] Initializing MBTI Chatbot (Lite Version)...")
         
         # 1. Setup Google Gemini
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
-            print("⚠️ WARNING: GEMINI_API_KEY not found in .env.")
+            print("[WARN] GEMINI_API_KEY not found in .env.")
         else:
             genai.configure(api_key=api_key)
             
@@ -17,7 +17,7 @@ class MBTIChatbot:
             # Pake Gemini 2.0 Flash (Standard)
             self.model = genai.GenerativeModel('gemini-2.0-flash')
         except Exception:
-            print("⚠️ 2.0 Flash failed, fallback to Lite")
+            print("[WARN] 2.0 Flash failed, fallback to Lite")
             self.model = genai.GenerativeModel('gemini-2.0-flash-lite')
         
     def generate_response(self, user_query, lang="en"):
@@ -36,6 +36,7 @@ INSTRUCTIONS:
 - Answer directly based on your extensive knowledge about MBTI and Psychology.
 - Be empathetic, insightful, and use formatting (bullet points) if helpful.
 - Keep answers concise (under 200 words) unless asked for details.
+- DO NOT use emojis in your response. Keep it clean and text-only.
 """
         try:
             response = self.model.generate_content(system_prompt)

@@ -9,3 +9,5 @@ deep-translator
 requests
 youtube-transcript-api
 google-generativeai
+transformers
+torch

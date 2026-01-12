@@ -40,11 +40,19 @@ async def startup_event():
     api_key = os.getenv("YOUTUBE_API_KEY")
     print("\n" + "="*40)
     if api_key:
-        print(f"✅ API KEY DITEMUKAN: {api_key[:5]}...******")
-        print("🚀 Mode: OFFICIAL API (Anti-Blokir)")
+        print(f"[OK] API KEY DITEMUKAN: {api_key[:5]}...******")
+        print("[MODE] Mode: OFFICIAL API (Anti-Blokir)")
     else:
-        print("❌ API KEY TIDAK DITEMUKAN!")
-        print("⚠️  Mode: FALLBACK SCRAPING (Rawan Error)")
+        print("[ERR] API KEY TIDAK DITEMUKAN!")
+        print("[WARN] Mode: FALLBACK SCRAPING (Rawan Error)")
+    
+    print("\n[WAIT] PRE-LOADING MODELS (Transformer + Emotions)...")
+    try:
+        NLPHandler.load_models()
+        print("[OK] Models Loaded Successfully!")
+    except Exception as e:
+        print(f"[ERR] Model Preload Failed: {e}")
+        
     print("="*40 + "\n")
 
 app.add_api_route("/api/predict", predict_endpoint, methods=["POST"])
