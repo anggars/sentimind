@@ -13,9 +13,9 @@ export default function Footer() {
           <span className="text-2xl font-black tracking-tighter text-orange-600">Sentimind.</span>
         </div>
         <div className="flex justify-center gap-6 mb-6 text-sm font-medium text-gray-600 dark:text-gray-300">
-          <Link href="/" className="hover:text-orange-600 transition-colors">Home</Link>
-          <Link href="/analyzer" className="hover:text-orange-600 transition-colors">Analyzer</Link>
-          <Link href="/quiz" className="hover:text-orange-600 transition-colors">Mini Test</Link>
+          <Link href="/" className="hover:text-orange-600 transition-colors">{lang === 'en' ? "Home" : "Beranda"}</Link>
+          <Link href="/analyzer" className="hover:text-orange-600 transition-colors">{lang === 'en' ? "Analyzer" : "Analisis"}</Link>
+          <Link href="/quiz" className="hover:text-orange-600 transition-colors">{lang === 'en' ? "Quiz" : "Kuis"}</Link>
           <Link href="/types" className="hover:text-orange-600 transition-colors">{lang === 'en' ? "Types" : "Tipe"}</Link>
           <Link href="/chat" className="hover:text-orange-600 transition-colors">Chat</Link>
         </div>
