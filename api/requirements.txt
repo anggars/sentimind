@@ -8,6 +8,6 @@ joblib
 deep-translator
 requests
 youtube-transcript-api
-google-generativeai
+google-genai
 transformers
 torch

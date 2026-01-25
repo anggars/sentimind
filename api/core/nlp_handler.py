@@ -6,7 +6,7 @@ import numpy as np
 import html
 from deep_translator import GoogleTranslator
 from youtube_transcript_api import YouTubeTranscriptApi
-import google.generativeai as genai
+
 import time
 
 # --- CONFIG PATH ---
@@ -106,21 +106,21 @@ class NLPHandler:
             except Exception as e: print(f"Emotion 2 Load Error: {e}")
 
     # --- GEMINI VALIDATOR SETUP ---
-    _gemini_model = None
+    _gemini_client = None
     
     @staticmethod
     def _init_gemini():
-        """Initialize Gemini model for validation (lazy loading)"""
-        if NLPHandler._gemini_model is None:
+        """Initialize Gemini Client for validation (lazy loading)"""
+        if NLPHandler._gemini_client is None:
             api_key = os.getenv("GEMINI_API_KEY")
             if api_key:
                 try:
-                    genai.configure(api_key=api_key)
-                    NLPHandler._gemini_model = genai.GenerativeModel('gemini-2.0-flash-lite')
-                    print("Gemini Validator Ready")
+                    from google import genai
+                    NLPHandler._gemini_client = genai.Client(api_key=api_key)
+                    print("Gemini Validator Ready (google-genai SDK)")
                 except Exception as e:
                     print(f"Gemini Init Failed: {e}")
-        return NLPHandler._gemini_model is not None
+        return NLPHandler._gemini_client is not None
     
     @staticmethod
     def _validate_with_gemini(text, ml_prediction):
@@ -174,7 +174,10 @@ REASON: Explicit mentions of networking, leading teams, and structured planning 
 """
         
         try:
-            response = NLPHandler._gemini_model.generate_content(prompt)
+            response = NLPHandler._gemini_client.models.generate_content(
+                model='gemini-2.0-flash', 
+                contents=prompt
+            )
             result_text = response.text.strip()
             
             # Parse response

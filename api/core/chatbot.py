@@ -1,6 +1,6 @@
 # api/core/chatbot.py
 import os
-import google.generativeai as genai
+from google import genai
 from .nlp_handler import MBTI_EXPLANATIONS
 
 class MBTIChatbot:
@@ -12,14 +12,16 @@ class MBTIChatbot:
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             print("[WARN] GEMINI_API_KEY not found in .env.")
+            self.client = None
         else:
-            genai.configure(api_key=api_key)
+            try:
+                self.client = genai.Client(api_key=api_key)
+            except Exception as e:
+                print(f"[ERR] Gemini Client Init Failed: {e}")
+                self.client = None
             
-        try:
-            self.model = genai.GenerativeModel('gemini-2.0-flash')
-        except Exception:
-            print("[WARN] 2.0 Flash failed, fallback to Lite")
-            self.model = genai.GenerativeModel('gemini-2.0-flash-lite')
+        # Model Configuration
+        self.model_name = 'gemini-2.0-flash'
         
     def generate_response(self, user_query, lang="en"):
         lang_instruction = "Answer in English Slang." if lang == "en" else "Jawab dalam Bahasa Indonesia gaul (Slang Jakarta/Lo-Gue), maskulin, santai, dan to the point. Panggil user 'bro' atau 'bre'. JANGAN panggil 'bestie', 'kak', atau 'gan'. Gaya bicara tongkrongan cowok tapi tetap edukatif soal MBTI."
@@ -51,7 +53,13 @@ INSTRUCTIONS:
 """
 
         try:
-            response = self.model.generate_content(system_prompt)
+            if not self.client:
+                return "Maaf, kunci otak saya (API Key) belum dipasang atau salah."
+                
+            response = self.client.models.generate_content(
+                model=self.model_name, 
+                contents=system_prompt
+            )
             return response.text
         except Exception as e:
             return f"Maaf, saya sedang mengalami gangguan koneksi ke otak AI saya. (Error: {str(e)})"
