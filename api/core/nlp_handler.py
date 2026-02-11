@@ -4,6 +4,10 @@ import requests
 import html
 from deep_translator import GoogleTranslator
 from youtube_transcript_api import YouTubeTranscriptApi
+from langdetect import detect, DetectorFactory
+
+# Force consistent language detection
+DetectorFactory.seed = 0
 
 # --- CONFIG ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -87,7 +91,20 @@ class NLPHandler:
 
 
     @staticmethod
+    def prepare_text(text):
+        """Only translate if language is not Indonesian or English.
+        XLM-RoBERTa handles id/en natively, no translation needed."""
+        try:
+            if len(text) > 4500: text = text[:4500]
+            lang = detect(text)
+            if lang not in ['id', 'en']:
+                return GoogleTranslator(source='auto', target='en').translate(text)
+            return text
+        except: return text
+
+    @staticmethod
     def translate_to_english(text):
+        """Force translate to English (used for keywords extraction)."""
         try:
             if len(text) > 4500: text = text[:4500]
             return GoogleTranslator(source='auto', target='en').translate(text)
@@ -113,7 +130,8 @@ class NLPHandler:
     @staticmethod
     def predict_all(raw_text):
         NLPHandler.load_models() 
-        processed_text = NLPHandler.translate_to_english(raw_text)
+        processed_text = NLPHandler.prepare_text(raw_text)
+        english_text = NLPHandler.translate_to_english(raw_text)  # For keywords only
         
         # --- MBTI PREDICTION (anggars/xlm-mbti) ---
         mbti_result = "UNKNOWN"
@@ -212,7 +230,7 @@ class NLPHandler:
         return {
             "mbti": mbti_result,
             "emotion": emotion_data,
-            "keywords": NLPHandler.extract_keywords(processed_text),
+            "keywords": NLPHandler.extract_keywords(english_text),
             "reasoning": {
                 "mbti": mbti_desc,
                 "emotion": emotion_reasoning,

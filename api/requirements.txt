@@ -4,6 +4,7 @@ python-dotenv
 pydantic
 numpy
 deep-translator
+langdetect
 requests
 youtube-transcript-api
 google-genai
