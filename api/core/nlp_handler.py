@@ -1,23 +1,15 @@
-import joblib
 import os
 import re
 import requests
-import numpy as np
 import html
 from deep_translator import GoogleTranslator
 from youtube_transcript_api import YouTubeTranscriptApi
 
-import time
-
-# --- CONFIG PATH ---
+# --- CONFIG ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MBTI_PATH = os.path.join(BASE_DIR, 'data', 'model_mbti.pkl')
-EMOTION_PATH = os.path.join(BASE_DIR, 'data', 'model_emotion.pkl')
 
-_model_mbti = None
-_classifier_mbti_transformer = None
-_classifier_roberta = None
-_classifier_distilbert = None
+_classifier_mbti = None
+_classifier_emotion = None
 
 EMOTION_TRANSLATIONS = {
     'admiration': 'Kagum', 'amusement': 'Terhibur', 'anger': 'Marah',
@@ -75,138 +67,24 @@ class NLPHandler:
 
     @staticmethod
     def load_models():
-        global _model_mbti, _classifier_mbti_transformer, _classifier_roberta, _classifier_distilbert
-        print(f"Loading models from: {BASE_DIR}")
+        global _classifier_mbti, _classifier_emotion
+        print(f"Loading models from HuggingFace Hub...")
         
-        if _model_mbti is None and os.path.exists(MBTI_PATH):
-            try: 
-                print(f"Loading MBTI Model (SVM) from: {MBTI_PATH}")
-                _model_mbti = joblib.load(MBTI_PATH)
+        if _classifier_mbti is None:
+            try:
+                print("Loading MBTI Model: anggars/xlm-mbti")
+                from transformers import pipeline
+                _classifier_mbti = pipeline("text-classification", model="anggars/xlm-mbti", top_k=1)
             except Exception as e: print(f"MBTI Load Error: {e}")
 
-        if _classifier_mbti_transformer is None:
+        if _classifier_emotion is None:
             try:
-                print(f"Loading MBTI Model (Transformer): parka735/mbti-classifier") 
+                print("Loading Emotion Model: anggars/xlm-emotion")
                 from transformers import pipeline
-                _classifier_mbti_transformer = pipeline("text-classification", model="parka735/mbti-classifier", top_k=1)
-            except Exception as e: print(f"MBTI Transformer Load Error: {e}")
+                _classifier_emotion = pipeline("text-classification", model="anggars/xlm-emotion", top_k=None)
+            except Exception as e: print(f"Emotion Load Error: {e}")
 
-        if _classifier_roberta is None:
-            try:
-                print("Loading Emotion Model 1: SamLowe/roberta-base-go_emotions")
-                from transformers import pipeline
-                _classifier_roberta = pipeline("text-classification", model="SamLowe/roberta-base-go_emotions", top_k=None)
-            except Exception as e: print(f"Emotion 1 Load Error: {e}")
 
-        if _classifier_distilbert is None:
-            try:
-                print("Loading Emotion Model 2: joeddav/distilbert-base-uncased-go-emotions-student")
-                from transformers import pipeline
-                _classifier_distilbert = pipeline("text-classification", model="joeddav/distilbert-base-uncased-go-emotions-student", top_k=None)
-            except Exception as e: print(f"Emotion 2 Load Error: {e}")
-
-    # --- GEMINI VALIDATOR SETUP ---
-    _gemini_client = None
-    
-    @staticmethod
-    def _init_gemini():
-        """Initialize Gemini Client for validation (lazy loading)"""
-        if NLPHandler._gemini_client is None:
-            api_key = os.getenv("GEMINI_API_KEY")
-            if api_key:
-                try:
-                    from google import genai
-                    NLPHandler._gemini_client = genai.Client(api_key=api_key)
-                    print("Gemini Validator Ready (google-genai SDK)")
-                except Exception as e:
-                    print(f"Gemini Init Failed: {e}")
-        return NLPHandler._gemini_client is not None
-    
-    @staticmethod
-    def _validate_with_gemini(text, ml_prediction):
-        """
-        Use Gemini to validate ML prediction.
-        Returns: (validated_mbti, confidence, reasoning)
-        """
-        if not NLPHandler._init_gemini():
-            return ml_prediction, 0.6, "ML only (Gemini unavailable)"
-        
-
-        
-        prompt = f"""You are an MBTI expert. Analyze this text and determine the MOST LIKELY MBTI type based ONLY on the content.
-
-TEXT TO ANALYZE:
-"{text}"
-
-ANALYSIS FRAMEWORK:
-1. I/E (Introversion/Extraversion):
-   - E indicators: Mentions of social events, leading teams, networking, group activities, energized by people
-   - I indicators: Preference for solitude, reflection, working alone, drained by social interaction
-
-2. N/S (Intuition/Sensing):
-   - N indicators: Abstract thinking, future-focused, big picture, patterns, possibilities, theory
-   - S indicators: Concrete details, present-focused, practical, facts, reality, hands-on
-
-3. T/F (Thinking/Feeling):
-   - T indicators: Logic, efficiency, objectivity, direct communication, "facts over feelings"
-   - F indicators: Empathy, harmony, values, subjective decisions, people-focused
-
-4. J/P (Judging/Perceiving):
-   - J indicators: Planning, structure, deadlines, organization, schedules, decisive
-   - P indicators: Spontaneous, flexible, adaptable, open-ended, exploratory
-
-CRITICAL INSTRUCTIONS:
-- Analyze INDEPENDENTLY - ignore any preconceptions
-- Look for EXPLICIT behavioral indicators in the text
-- Weight E/I heavily on social energy language (not just content topic)
-- If text mentions "leading", "networking", "team meetings" → strong E signal
-- If text emphasizes "planning", "deadlines", "structure" → strong J signal
-
-Respond in this EXACT format:
-MBTI: [4-letter type]
-CONFIDENCE: [0.0-1.0]
-REASON: [One sentence citing specific text evidence]
-
-Example:
-MBTI: ENTJ
-CONFIDENCE: 0.88
-REASON: Explicit mentions of networking, leading teams, and structured planning indicate ENTJ.
-"""
-        
-        try:
-            response = NLPHandler._gemini_client.models.generate_content(
-                model='gemini-2.0-flash', 
-                contents=prompt
-            )
-            result_text = response.text.strip()
-            
-            # Parse response
-            lines = result_text.split('\n')
-            validated_mbti = ml_prediction
-            confidence = 0.7
-            reason = "Gemini validation"
-            
-            for line in lines:
-                if line.startswith('MBTI:'):
-                    validated_mbti = line.split(':', 1)[1].strip().upper()
-                elif line.startswith('CONFIDENCE:'):
-                    try:
-                        confidence = float(line.split(':', 1)[1].strip())
-                    except:
-                        confidence = 0.7
-                elif line.startswith('REASON:'):
-                    reason = line.split(':', 1)[1].strip()
-            
-            # Validate MBTI format (must be 4 chars)
-            if len(validated_mbti) != 4 or not all(c in 'IENTFSJP' for c in validated_mbti):
-                print(f"Invalid Gemini MBTI: {validated_mbti}, using ML: {ml_prediction}")
-                return ml_prediction, 0.6, "Invalid Gemini response - using ML"
-            
-            return validated_mbti, confidence, reason
-            
-        except Exception as e:
-            print(f"Gemini Validation Error: {e}")
-            return ml_prediction, 0.6, f"Gemini error - using ML"
 
     @staticmethod
     def translate_to_english(text):
@@ -237,150 +115,86 @@ REASON: Explicit mentions of networking, leading teams, and structured planning 
         NLPHandler.load_models() 
         processed_text = NLPHandler.translate_to_english(raw_text)
         
-        # --- MBTI PREDICTION WITH GEMINI VALIDATION ---
+        # --- MBTI PREDICTION (anggars/xlm-mbti) ---
         mbti_result = "UNKNOWN"
         mbti_confidence = 0.0
-        mbti_reasoning = ""
         
-        if _model_mbti and _classifier_mbti_transformer:
+        if _classifier_mbti:
             try:
-                # 1. SVM Prediction (Keyword/Structure)
-                svm_pred = _model_mbti.predict([processed_text])[0]
+                mbti_input = processed_text[:2000]
+                mbti_output = _classifier_mbti(mbti_input)
                 
-                # 2. Transformer Prediction
-                trans_input = processed_text[:2000]
-                trans_output = _classifier_mbti_transformer(trans_input)
-                
-                # Handle nested list output (common in batched pipelines)
-                # Output can be [{'label': 'A'}] OR [[{'label': 'A'}]]
-                if isinstance(trans_output, list) and isinstance(trans_output[0], list):
-                    trans_res = trans_output[0][0]
-                elif isinstance(trans_output, list):
-                    trans_res = trans_output[0]
+                # Handle nested list output
+                if isinstance(mbti_output, list) and isinstance(mbti_output[0], list):
+                    mbti_res = mbti_output[0][0]
+                elif isinstance(mbti_output, list):
+                    mbti_res = mbti_output[0]
                 else:
-                    trans_res = trans_output
+                    mbti_res = mbti_output
 
-                trans_pred = trans_res['label'].upper()
-                trans_conf = trans_res['score']
-                
-                print(f"[Voting] SVM='{svm_pred}' vs Transformer='{trans_pred}' ({trans_conf:.2%})")
-
-                # 3. Consensus Logic
-                if svm_pred == trans_pred:
-                    # Both agree! High confidence.
-                    print("[Check] Models AGREE! Auto-approving.")
-                    mbti_result = svm_pred
-                    mbti_confidence = 0.95
-                    mbti_reasoning = f"Both AI models agreed strictly on {mbti_result}."
-                    
-                    # Optional: Lightweight Gemini check just for reasoning text, IF enabled.
-                    # validation is skipped for speed since we have consensus.
-                else:
-                    # Disagreement! Gemini is the Tie-Breaker.
-                    print("[Warning] Models DISAGREE! Summoning Gemini Judge...")
-                    
-                    # Prepare context for Gemini
-                    validation_context = f"Model A (Keyword) detected {svm_pred}. Model B (Context) detected {trans_pred}."
-                    
-                    validated_mbti, confidence, reason = NLPHandler._validate_with_gemini(
-                        processed_text, validation_context 
-                    )
-                    
-                    mbti_result = validated_mbti
-                    mbti_confidence = confidence
-                    mbti_reasoning = reason
-                    print(f"[Gemini] Verdict: {mbti_result} (Confidence: {confidence})")
+                mbti_result = mbti_res['label'].upper()
+                mbti_confidence = mbti_res['score']
+                print(f"[MBTI] Predicted: {mbti_result} ({mbti_confidence:.2%})")
 
             except Exception as e:
-                print(f"[Error] Hybrid MBTI Error: {e}")
-                # Fallback to SVM if everything explodes
-                try: 
-                    mbti_result = _model_mbti.predict([processed_text])[0]
-                    mbti_confidence = 0.4
-                except:
-                    mbti_result = "INTJ"
-                mbti_reasoning = "System fallback due to hybrid error."
+                print(f"[Error] MBTI Prediction Error: {e}")
+                mbti_result = "INTJ"
+                mbti_confidence = 0.0
 
-        # --- EMOTION PREDICTION (HYBRID TRANSFORMER) ---
+        # --- EMOTION PREDICTION (anggars/xlm-emotion) ---
         emotion_data = {"id": "Netral", "en": "Neutral", "raw": "neutral", "list": []}
         confidence_score = 0.0
         
-        try:
-             # Load pipelines (Ensured in load_models)
-            global _classifier_roberta, _classifier_distilbert
-            
-            # Truncate for safety
-            emo_input = processed_text[:1500] 
-            
-            combined_scores = {}
-            
-            def add_scores(results):
-                if isinstance(results, list) and isinstance(results[0], list):
-                    results = results[0]
-                for item in results:
-                    label = item['label']
-                    score = item['score']
-                    combined_scores[label] = combined_scores.get(label, 0) + score
-
-            if _classifier_roberta:
-                 add_scores(_classifier_roberta(emo_input))
-            if _classifier_distilbert:
-                 add_scores(_classifier_distilbert(emo_input))
-
-            # Normalize and filter
-            if 'neutral' in combined_scores:
-                del combined_scores['neutral'] # Remove neutral preference
-            
-            sorted_emotions = sorted(combined_scores.items(), key=lambda x: x[1], reverse=True)
-            
-            top_3_list = []
-            if sorted_emotions:
-                # Top 1 for legacy compatibility
-                best_label, total_score = sorted_emotions[0]
-                confidence_score = (total_score / 2.0) 
+        if _classifier_emotion:
+            try:
+                emo_input = processed_text[:1500]
+                emo_output = _classifier_emotion(emo_input)
                 
-                indo_label = EMOTION_TRANSLATIONS.get(best_label, best_label.capitalize())
-                emotion_data = {
-                    "id": indo_label, 
-                    "en": best_label.capitalize(), 
-                    "raw": best_label,
-                    "list": []  # Will populate below
-                }
+                # Handle nested list output
+                if isinstance(emo_output, list) and isinstance(emo_output[0], list):
+                    emo_output = emo_output[0]
                 
-                # Populate Top 3 List
-                for label, score in sorted_emotions[:3]:
-                    norm_score = score / 2.0
-                    top_3_list.append({
-                        "en": label.capitalize(),
-                        "id": EMOTION_TRANSLATIONS.get(label, label.capitalize()),
-                        "score": norm_score
-                    })
+                # Filter out neutral and sort by score
+                scores = {item['label']: item['score'] for item in emo_output if item['label'] != 'neutral'}
+                sorted_emotions = sorted(scores.items(), key=lambda x: x[1], reverse=True)
                 
-                emotion_data["list"] = top_3_list
-                print(f"Emotion Hybrid Top 1: {emotion_data['en']} ({confidence_score:.2%})")
-            else:
-                print("Emotion Hybrid: No clear emotion found (Neutral)")
+                if sorted_emotions:
+                    best_label, best_score = sorted_emotions[0]
+                    confidence_score = best_score
+                    
+                    indo_label = EMOTION_TRANSLATIONS.get(best_label, best_label.capitalize())
+                    emotion_data = {
+                        "id": indo_label, 
+                        "en": best_label.capitalize(), 
+                        "raw": best_label,
+                        "list": []
+                    }
+                    
+                    # Top 3 list
+                    for label, score in sorted_emotions[:3]:
+                        emotion_data["list"].append({
+                            "en": label.capitalize(),
+                            "id": EMOTION_TRANSLATIONS.get(label, label.capitalize()),
+                            "score": score
+                        })
+                    
+                    print(f"[Emotion] Top 1: {emotion_data['en']} ({confidence_score:.2%})")
+                else:
+                    print("[Emotion] No clear emotion found (Neutral)")
 
-        except Exception as e:
-            print(f"Emotion Prediction Error: {e}") 
+            except Exception as e:
+                print(f"[Error] Emotion Prediction Error: {e}")
 
         # --- REASONING GENERATION ---
         mbti_desc = MBTI_EXPLANATIONS.get(mbti_result, {
             'en': "Complex personality type.", 
             'id': "Kepribadian yang cukup kompleks."
         })
-        
-        # Add Gemini reasoning to MBTI description
-        if mbti_reasoning:
-            mbti_desc['validation'] = mbti_reasoning
-            mbti_desc['confidence'] = mbti_confidence
+        mbti_desc['confidence'] = mbti_confidence
             
         # Emotion Reasoning
-        conf_percent = int(confidence_score * 100)
-        
-        # Generate dynamic reasoning for Top 3
         em_list_str = ""
-        if 'list' in emotion_data and emotion_data['list']:
+        if emotion_data['list']:
              labels = [f"{item['en']} ({int(item['score']*100)}%)" for item in emotion_data['list']]
              em_list_str = ", ".join(labels)
 
